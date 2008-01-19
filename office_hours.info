@@ -1,0 +1,7 @@
+; $Id: office_hours.info,v 1.1 2008-01-19 09:44:50 ozeuss Exp $ 
+name = office hours
+description = Defines an office hours field for cck
+package = CCK
+dependencies = content
+
+

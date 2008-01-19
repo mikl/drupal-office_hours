@@ -1,0 +1,66 @@
+@CHARSET "UTF-8";
+
+/*.office-hours-endhours .form-item label, .office-hours-starthours .form-item label, .office-hours-day .form-item label {
+display: inline;
+}*/
+
+fieldset.office-container-inline .form-item {float:left; padding-right: 4px; margin:0}
+fieldset.office-container-inline .form-item, fieldset.office-container-inline .form-item input {width:auto;}
+fieldset.office-container-inline .description {clear: both;}
+fieldset.office-container-inline .form-item input, fieldset.office-container-inline .form-item select {margin-right:.5em;}
+fieldset.office-container-inline div.office-hours-block{
+  display: block;
+  clear: both;
+}
+
+fieldset.office-container-inline div.office-hours-block:after {
+ content: ".";
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden
+}
+ 
+/*
+** Markup free clearing
+** Details: http://www.positioniseverything.net/easyclearing.html
+** modified from date.css from date module
+*/
+fieldset.office-container-inline:after {
+  content: ".";
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+ }
+
+fieldset.office-container-inline {
+  display: inline-block;
+ }
+
+/* Hides from IE-mac \*/
+* html fieldset.office-container-inline {
+  height: 1%;
+ }
+fieldset.office-container-inline {
+  display: block;
+ }
+/* End hide from IE-mac */
+
+/* styles for display of office_hours in nodes */
+div.oh-display {
+ display:block;
+}
+span.oh-display-single {
+}
+span.oh-display-start {
+}
+span.oh-display-separator {
+}
+span.oh-display-end {
+ 
+  clear:left;
+  margin-left:20px;
+}
+
+
