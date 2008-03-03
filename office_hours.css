@@ -51,6 +51,11 @@ fieldset.office-container-inline {
 div.oh-display {
  display:block;
 }
+span.oh-display-day-show {
+}
+span.oh-display-day-hide {
+visibility: hidden;
+}
 span.oh-display-single {
 }
 span.oh-display-start {

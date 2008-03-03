@@ -1,5 +1,5 @@
 <?php
-// $Id: office_hours.module,v 1.1 2008-01-19 09:44:50 ozeuss Exp $
+// $Id: office_hours.module,v 1.1.2.1 2008-03-03 07:35:50 ozeuss Exp $
 
 /**
  * @file
@@ -102,7 +102,13 @@ function office_hours_field_settings($op, $field) {
         '#required' => FALSE,
         '#description' => t('Set the allowed end hours. Note: if you just changed the clock format, please submit before changing this'),
       );
-      
+      $form['valhrs'] = array(
+        '#type' => 'checkboxes',
+        '#title' => t('Validate hours'),
+        '#options' => array('validatehrs'=> t('Check that closing hours are not earlier than opening hours')),
+        '#required' => FALSE,
+        '#description' => t('Please note that this will work as long as the opening hours are not through midnight.'),
+      );
       return $form;
 
     case 'save':
@@ -184,7 +190,18 @@ function office_hours_field($op, &$node, $field, &$node_field, $teaser, $page) {
        return theme('field', $node, $field, $items, $teaser, $page);
 
     case 'validate':
-      //holder for validation. possibly add restriction so that the start hour couldn't be later than end hour.
+    if (isset($field['valhrs'])) {
+         if (is_array($node_field)) {
+        foreach ($node_field as $delta => $item) {
+       $error_field = $field['field_name']. '][' .$delta. '][endhours';
+        $starthours= tf_to_mil($item['starthours']);
+        $endhours= tf_to_mil($item['endhours']);
+        if ($starthours>$endhours) {
+          form_set_error($error_field, t('Closing hours are earlier than opening hours'));
+            }
+          }
+        }
+      }
       break;
   }
 }
@@ -230,12 +247,28 @@ function office_hours_field_formatter_info() {
  * transformations such as running check_plain() or check_markup().
  */
 function office_hours_field_formatter($field, $item, $formatter, $node) {
+    static $count= 0;
+    static $lastday= 7;
+   if ($count>0) { //this is not the first iteration.
+    if ($lastday == $item['day']) { 
+      $display='hide';
+    }
+    else {
+      $display='show';
+    }
+  }
+  $count++;
+  $lastday=$item['day'];
+ 
+ 
+    
   if (isset($item['day'])) {
     $daykey= check_plain($item['day']);
  $days=array(0 => t('Sunday'), 1 => t('Monday'), 2 => t('Tuesday'),3 => t('Wednesday'), 4 => t('Thursday'), 5 => t('Friday'), 6 => t('Saturday'));
    $day= $days[$daykey];
   }
   else {$day= '';}
+  
   $endhrs=check_plain($item['endhours']);
   $strhrs=check_plain($item['starthours']);
   
@@ -243,11 +276,14 @@ function office_hours_field_formatter($field, $item, $formatter, $node) {
     $endhrs=convert_to_ampm($endhrs);
     $strhrs=convert_to_ampm($strhrs);
   }
+
   
   switch ($formatter) {
     default:
-    return theme('oh_formatter_display', $day, $strhrs, $endhrs);
+    return theme('oh_formatter_display', $day, $strhrs, $endhrs, $display);
   }
+
+
 }
 
 
@@ -296,19 +332,19 @@ function office_hours_widget_settings($op, $widget) {
   switch ($op) {
     case 'form':
       $form = array();
-     /* $form['numitems'] = array(
+      $form['numitems'] = array(
         '#type' => 'textfield',
-        '#title' => t('number of hour blocks/days'),
-        '#default_value' => $widget['numitems'] ? $widget['numitems'] : 1,
+        '#title' => t('number of additional widgets showing'),
+        '#default_value' => $widget['numitems'] ? $widget['numitems'] : 2,
         '#required' => TRUE,
-      );*/
+      );
       return $form;
 
     case 'validate':
       break;
 
-    //case 'save':
-     // return array('numitems');
+    case 'save':
+      return array('numitems');
 
     case 'callbacks':
       return array(
@@ -343,30 +379,32 @@ function office_hours_widget($op, &$node, $field, &$node_field) {
 
     case 'form':
       $ophours= _create_hours_arr($field, TRUE);
+      $numitems=$field['widget']['numitems'];
       $form[$field['field_name']] = array('#tree' => TRUE);
        
-       if ($field['multiple']) {
+      if ($field['multiple']) {
        
         $form[$field['field_name']]['#type'] = 'fieldset';
-        $form[$field['field_name']]['#description'] = t($field['widget']['description']);
+        $form[$field['field_name']]['#title'] = t($field['widget']['label']);
+        $form[$field['field_name']]['#description'] = t('If you need more hour blocks ("widgets"), submit the form and edit it again. more field will show');
         $form[$field['field_name']]['#attributes'] = array('class' => 'office-container-inline');
         
         $delta = 0;
-      foreach ($node_field as $data) {
-       if (isset($data['day']) && isset($data['starthours']) && isset($data['endhours']) ) {
+       foreach ($node_field as $data) {
+        if (isset($data['day']) && isset($data['starthours']) && isset($data['endhours']) ) {
         $form[$field['field_name']][$delta]['day'] = array(
           '#type' => 'select',
-          '#title' => t('Day'), //($delta == 0) ? t($field['widget']['label']) : '',
+          '#title' => t('Day'), 
           '#options' => array(0 => t('Sunday'), 1 => t('Monday'), 2 => t('Tuesday'),
           3 => t('Wednesday'), 4 => t('Thursday'), 5 => t('Friday'), 6 => t('Saturday'), 7=> t('None')),
           '#description' => $field['widget']['description'],
-          '#default_value' => $data['day'], //$node_field[$key]['day'],
+          '#default_value' => $data['day'], 
           '#required' => ($delta == 0) ? $field['required'] : FALSE,
           '#prefix' => '<div class="office_hours_block">',
         );
         $form[$field['field_name']][$delta]['starthours'] = array(
           '#type' => 'select',
-          '#title' => t('Starting from'),//($delta == 0) ? t($field['widget']['label']) : '',
+          '#title' => t('Starting from'),
           '#options' => $ophours,
           '#required' => ($delta == 0) ? $field['required'] : FALSE,
           '#description' => $field['widget']['description'],
@@ -374,7 +412,7 @@ function office_hours_widget($op, &$node, $field, &$node_field) {
         );
         $form[$field['field_name']][$delta]['endhours'] = array(
           '#type' => 'select',
-          '#title' => t('Ending at'),//($delta == 0) ? t($field['widget']['label']) : '',
+          '#title' => t('Ending at'),
           '#options' => $ophours,
           '#required' => ($delta == 0) ? $field['required'] : FALSE,
           '#description' => $field['widget']['description'],
@@ -384,7 +422,7 @@ function office_hours_widget($op, &$node, $field, &$node_field) {
       $delta++;
        }
       }
-      foreach (range($delta,$delta+1) as $delta) {
+      foreach (range($delta,$delta+$numitems) as $delta) {
       $form[$field['field_name']][$delta]['day'] = array(
           '#type' => 'select',
           '#title' => t('Day'), //($delta == 0) ? t($field['widget']['label']) : '',
@@ -400,7 +438,7 @@ function office_hours_widget($op, &$node, $field, &$node_field) {
           '#options' => $ophours,
           '#required' => $field['required'],
           '#description' => $field['widget']['description'],
-          '#default_value' => 0,
+          '#default_value' => FALSE,
         );
         $form[$field['field_name']][$delta]['endhours'] = array(
           '#type' => 'select',
@@ -408,7 +446,7 @@ function office_hours_widget($op, &$node, $field, &$node_field) {
           '#options' => $ophours,
           '#required' => $field['required'],
           '#description' => $field['widget']['description'],
-          '#default_value' => 'erase',
+          '#default_value' => FALSE,
           '#suffix' => '</div>',
         );
       }
@@ -445,7 +483,7 @@ function office_hours_widget($op, &$node, $field, &$node_field) {
 
     case 'process form values':
     foreach ($node_field as $delta => $item) {
-       if ( $item['starthours'] == 'erase' ) {
+       if ( $item['starthours'] == 'none' ) {
        unset($node_field[$delta]);
         }
     }
@@ -458,99 +496,91 @@ function office_hours_widget($op, &$node, $field, &$node_field) {
  * items are saved in 24 hours string format (i.e '18:00'). the logic of this function could be better.
  */
 function _create_hours_arr($field, $limit = TRUE) {  
+
  $fl1= $field['limitstart'];
  $fl2= $field['limitend'];
- $limst=0; $limend=24; $stam=1; $endam=12; $stpm= 1; $endpm= 12; $mins='00';
+ $gran= ($field['granularity']== 0) ? 60 : $field['granularity'];
+ $limst=0; $limend=23; $mins='00';
+
   if ($limit === TRUE) {
-    if (isset($field['limitstart'])) {
+    if ($fl1 != 'none') {
       list($limst, $mins)= explode(":",$fl1);
-      if ($limst>12) { $stpm=$limst-12; }
-      else {$stam=$limst;}
     }
-   else {$limst=0;}
-   if (isset($field['limitend'])) {
-    list($limend, $mine)= explode(":",$fl2);
-       if ($limend>12) { $endpm=$limend-12; }
-      else {$endam=$limend;}
+    if ($fl2 != 'none') {
+      list($limend, $mine)= explode(":",$fl2);
     }
-   else {$limend=24;}
   }
-  
- $ophours['erase'] = t('None');
+ $ophours['none'] = t('None');
  
-    if ($field['hoursformat'] == 1) { //AMPM
-      if ($stpm == 1) {
-      foreach (range($stam,$endam) as $i) { 
-       if ($mins=='00') {
-       $hr= $i.':00';
-       $ophours[$hr]= $i.':00 AM';
-       }
-       else {$mins='00';} // next iteration, go through round hours
-     if ( $field['granularity'] > 0) { 
-          $j=$field['granularity']; $add=$j; // either 15 or 30
-          for(; $j<=45; $j=$j+$add) {
-           $hr1=$i.':'.$j;
-           if ($i<12) $ophours[$hr1]=$i.':'.$j.' AM';
-          }
-        }
-     }
-     }
-     foreach (range($stpm,$endpm) as $i) {
-      $milh= $i+12;
-       if ($mins=='00') {
-      $hr= $milh.':00';
-      $ophours[$hr]= $i.':00 PM';
-      }
-       else {$mins='00';} // next iteration, go through round hours
-     if ($field['granularity'] > 0) { 
-          $add=$j=$field['granularity']; // either 15 or 30
-          for(; $j<=45; $j=$j+$add) {
-           $hr1= $milh.':'.$j;
-            if ($i<12) $ophours[$hr1]=$i.':'.$j.' PM';
-          }
+  if ($field['hoursformat'] == 1) {   //12-hour clock
+    foreach (range($limst,$limend) as $i) { 
+      $mincounter= ($i==$limst && $mins!=0 ) ? $mins : 0; 
+      for(; $mincounter<=45; $mincounter=$mincounter+$gran) {
+        if (!($i==$limend && $mincounter>$minend)) {
+          $mincounter= ($mincounter==0)? '00' : $mincounter;
+          $hr=$i.':'.$mincounter;
+          $ophours[$hr]=convert_to_ampm($hr);
         }
       }
     }
-    else {
-    foreach (range($limst,$limend) as $i) { 
-        if ($mins=='00') {
-        $hr= $i.':00';
-        $ophours[$hr]= $hr;
+  }
+        
+  else { //24-hour clock
+      foreach (range($limst,$limend) as $i) { 
+        $mincounter= ($i==$limst && $mins!=0 ) ? $mins : 0; 
+      for(; $mincounter<=45; $mincounter=$mincounter+$gran) {
+        if (!($i==$limend && $mincounter>$minend)) {
+          $mincounter= ($mincounter==0)? '00' : $mincounter;
+          $hr=$i.':'.$mincounter;
+          $ophours[$hr]=$hr;
         }
-        else {$mins='00';} // next iteration, go through round hours
-        if ($field['granularity'] > 0) { 
-          $add=$j=$field['granularity']; // either 15 or 30
-          for(; $j<=45; $j=$j+$add) {
-           $hr1=$i.':'.$j;
-           $ophours[$hr1]=$hr1;
-          }
-        }
-     }
+      }
+    }
    }
    return $ophours;
+   
+   
 }
 /**
  * Helper function for conversion of clock format.
  */
 function convert_to_ampm($hour) {
   list($hr, $min)= explode(":",$hour);
-  if ($hr>12 && $hr<24) {
+  if ($hr== '0') { //midnight
+    $hr=12;
+    $ampm= ' AM';
+  }
+  elseif ($hr== 12) {
+    $hr=12;
+    $ampm= ' PM';
+  }
+  elseif ($hr>=12 && $hr<24) { // a pm time
     $hr= $hr-12;
     $ampm= ' PM';
   }
+
   else {
     $ampm=' AM';
   }
+  
 return $hr.':'.$min.$ampm ;
+}
+
+function tf_to_mil($hour) {
+  list($hr, $min)= explode(":",$hour);
+  $hr= $hr*60+$min;
+  return $hr;
 }
 
 /**
  * Theme function for date node display
  */
-function theme_oh_formatter_display($day, $strhrs, $endhrs) {
- return '<div class="oh-display"><span class="oh-display-day">'.$day.'</span>
+function theme_oh_formatter_display($day, $strhrs, $endhrs, $display) {
+$display= (!isset($display)) ? 'show' : $display;
+ return '<div class="oh-display"><span class="oh-display-day-'.$display.'">'.$day.'</span>
  <span class="oh-display-start">'. $strhrs .'</span>
  <span class="oh-display-separator"> - </span>
  <span class="oh-display-end">'. $endhrs .'</span></div>';
  
 }
+
