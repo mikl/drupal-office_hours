@@ -1,7 +1,13 @@
-; $Id: office_hours.info,v 1.1 2008-01-19 09:44:50 ozeuss Exp $ 
+; $Id: office_hours.info,v 1.1.2.1 2008-03-18 17:39:17 ozeuss Exp $ 
 name = office hours
 description = Defines an office hours field for cck
 package = CCK
 dependencies = content
 
+
+
+; Information added by drupal.org packaging script on 2008-03-03
+version = "5.x-1.2"
+project = "office_hours"
+datestamp = "1204530007"
 

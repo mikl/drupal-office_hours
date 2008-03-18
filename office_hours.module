@@ -1,13 +1,12 @@
 <?php
-// $Id: office_hours.module,v 1.1.2.1 2008-03-03 07:35:50 ozeuss Exp $
+// $Id: office_hours.module,v 1.1.2.2 2008-03-18 17:39:17 ozeuss Exp $
 
 /**
  * @file
  * Creates a field and widget for inserting working or office hours per day
  *
  * 
- *TODO: allow for more than one 'block' of hours per day, or merge  them if the day is identical.
-
+ *
 
 /**
  * implementation of hook_menu.
@@ -90,7 +89,7 @@ function office_hours_field_settings($op, $field) {
         '#type' => 'select',
         '#title' => t('Limit hours start'),
         '#options' => $options,
-        '#default_value' => $field['limitstart']? $field['limitstart'] : FALSE, // $options['None'],
+        '#default_value' => $field['limitstart']? $field['limitstart'] : FALSE, 
         '#required' => FALSE,
         '#description' => t('Set the allowed start hours. Note: if you just changed the clock format, please submit before changing this.'),
       );
@@ -98,7 +97,7 @@ function office_hours_field_settings($op, $field) {
         '#type' => 'select',
         '#title' => t('Limit hours end'),
         '#options' => $options,
-        '#default_value' => $field['limitend'] ? $field['limitend'] : FALSE,  // $options['None'],
+        '#default_value' => $field['limitend'] ? $field['limitend'] : FALSE,
         '#required' => FALSE,
         '#description' => t('Set the allowed end hours. Note: if you just changed the clock format, please submit before changing this'),
       );
@@ -112,7 +111,7 @@ function office_hours_field_settings($op, $field) {
       return $form;
 
     case 'save':
-      return array('hoursformat', 'granularity', 'limitstart', 'limitend');
+      return array('hoursformat', 'granularity', 'limitstart', 'limitend', 'valhrs');
 
     case 'database columns':
       $columns = array(
@@ -129,12 +128,10 @@ function office_hours_field_settings($op, $field) {
 
     case 'tables':
       $tables = content_views_field_tables($field);
-      // whatever additions / modifications needed on the default definitions
       return $tables;
 
     case 'arguments':
       $arguments = content_views_field_arguments($field);
-      // whatever additions / modifications needed on the default definitions
       return $arguments;
 
     case 'filters':
@@ -259,8 +256,6 @@ function office_hours_field_formatter($field, $item, $formatter, $node) {
   }
   $count++;
   $lastday=$item['day'];
- 
- 
     
   if (isset($item['day'])) {
     $daykey= check_plain($item['day']);
@@ -277,12 +272,10 @@ function office_hours_field_formatter($field, $item, $formatter, $node) {
     $strhrs=convert_to_ampm($strhrs);
   }
 
-  
   switch ($formatter) {
     default:
     return theme('oh_formatter_display', $day, $strhrs, $endhrs, $display);
   }
-
 
 }
 
@@ -425,7 +418,7 @@ function office_hours_widget($op, &$node, $field, &$node_field) {
       foreach (range($delta,$delta+$numitems) as $delta) {
       $form[$field['field_name']][$delta]['day'] = array(
           '#type' => 'select',
-          '#title' => t('Day'), //($delta == 0) ? t($field['widget']['label']) : '',
+          '#title' => t('Day'),
           '#options' => array(0 => t('Sunday'), 1 => t('Monday'), 2 => t('Tuesday'),
           3 => t('Wednesday'), 4 => t('Thursday'), 5 => t('Friday'), 6 => t('Saturday'), 7=> t('None')),
           '#description' => $field['widget']['description'],
@@ -434,7 +427,7 @@ function office_hours_widget($op, &$node, $field, &$node_field) {
         );
         $form[$field['field_name']][$delta]['starthours'] = array(
           '#type' => 'select',
-            '#title' => t('Starting from'),//($delta == 0) ? t($field['widget']['label']) : '',
+            '#title' => t('Starting from'),
           '#options' => $ophours,
           '#required' => $field['required'],
           '#description' => $field['widget']['description'],
@@ -493,14 +486,14 @@ function office_hours_widget($op, &$node, $field, &$node_field) {
 
 /**
  * helper function to create hours array.
- * items are saved in 24 hours string format (i.e '18:00'). the logic of this function could be better.
+ * items are saved in 24 hours string format (i.e '18:00').
  */
 function _create_hours_arr($field, $limit = TRUE) {  
 
  $fl1= $field['limitstart'];
  $fl2= $field['limitend'];
  $gran= ($field['granularity']== 0) ? 60 : $field['granularity'];
- $limst=0; $limend=23; $mins='00';
+ $limst=0; $limend=23; $mins='00'; $mine=60;
 
   if ($limit === TRUE) {
     if ($fl1 != 'none') {
@@ -514,10 +507,10 @@ function _create_hours_arr($field, $limit = TRUE) {
  
   if ($field['hoursformat'] == 1) {   //12-hour clock
     foreach (range($limst,$limend) as $i) { 
-      $mincounter= ($i==$limst && $mins!=0 ) ? $mins : 0; 
-      for(; $mincounter<=45; $mincounter=$mincounter+$gran) {
-        if (!($i==$limend && $mincounter>$minend)) {
-          $mincounter= ($mincounter==0)? '00' : $mincounter;
+      $mincounter= ($i==$limst) ? $mins : 0; //in the first iteration, start the count according to limst. if not, begin from 0
+      for(; $mincounter<=45; $mincounter=$mincounter+$gran) { 
+        if (!($i==$limend && $mincounter>$mine)) { //last iteration
+          $mincounter= ($mincounter==0)? '00' : $mincounter; //preparing the mincounter for use in a string
           $hr=$i.':'.$mincounter;
           $ophours[$hr]=convert_to_ampm($hr);
         }
@@ -527,9 +520,9 @@ function _create_hours_arr($field, $limit = TRUE) {
         
   else { //24-hour clock
       foreach (range($limst,$limend) as $i) { 
-        $mincounter= ($i==$limst && $mins!=0 ) ? $mins : 0; 
+        $mincounter= ($i==$limst) ? $mins : 0; 
       for(; $mincounter<=45; $mincounter=$mincounter+$gran) {
-        if (!($i==$limend && $mincounter>$minend)) {
+        if (!($i==$limend && $mincounter>$mine)) {
           $mincounter= ($mincounter==0)? '00' : $mincounter;
           $hr=$i.':'.$mincounter;
           $ophours[$hr]=$hr;
@@ -546,19 +539,18 @@ function _create_hours_arr($field, $limit = TRUE) {
  */
 function convert_to_ampm($hour) {
   list($hr, $min)= explode(":",$hour);
-  if ($hr== '0') { //midnight
+  if ($hr== '0') { // midnight
     $hr=12;
     $ampm= ' AM';
   }
-  elseif ($hr== 12) {
+  elseif ($hr== 12) { // noon
     $hr=12;
     $ampm= ' PM';
   }
-  elseif ($hr>=12 && $hr<24) { // a pm time
+  elseif ($hr>12 && $hr<24) { // a pm time
     $hr= $hr-12;
     $ampm= ' PM';
   }
-
   else {
     $ampm=' AM';
   }
