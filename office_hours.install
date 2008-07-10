@@ -27,6 +27,3 @@ function office_hours_enable() {
 function office_hours_disable() {
   content_notify('disable', 'office_hours');
 }
-
-?>
-
