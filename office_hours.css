@@ -4,15 +4,30 @@
 display: inline;
 }*/
 
-fieldset.office-container-inline .form-item {float:left; padding-right: 4px; margin:0}
-fieldset.office-container-inline .form-item, fieldset.office-container-inline .form-item input {width:auto;}
-fieldset.office-container-inline .description {clear: both;}
-fieldset.office-container-inline .form-item input, fieldset.office-container-inline .form-item select {margin-right:.5em;}
+fieldset.office-container-inline .form-item {
+  float:left; padding-right: 4px; margin:0
+}
+fieldset.office-container-inline .form-item, fieldset.office-container-inline .form-item input {
+  width:auto;
+}
+fieldset.office-container-inline .description {
+clear: both;
+}
+fieldset.office-container-inline .form-item input, fieldset.office-container-inline .form-item select {
+margin-right:.7em;
+}
 fieldset.office-container-inline div.office-hours-block{
-  display: block;
+  display:block;
   clear: both;
 }
 
+fieldset.office-container-inline div.office-hours-block span.morelink{
+  display: inline;
+  clear: none;
+  float:left;
+  margin-right:0.7em;
+  margin-left:0.7em;
+}
 fieldset.office-container-inline div.office-hours-block:after {
  content: ".";
   display: block;
@@ -24,7 +39,8 @@ fieldset.office-container-inline div.office-hours-block:after {
 /*
 ** Markup free clearing
 ** Details: http://www.positioniseverything.net/easyclearing.html
-** modified from date.css from date module
+** based on date.css from date module
+* css for displaying office hours in the node editing form
 */
 fieldset.office-container-inline:after {
   content: ".";
@@ -34,8 +50,13 @@ fieldset.office-container-inline:after {
   visibility: hidden;
  }
 
+.oh-toggle {
+
+}
+
+
 fieldset.office-container-inline {
-  display: inline-block;
+ display: inline-block;
  }
 
 /* Hides from IE-mac \*/
@@ -51,9 +72,11 @@ fieldset.office-container-inline {
 div.oh-display {
  display:block;
 }
+
 span.oh-display-day-show {
 }
-span.oh-display-day-hide {
+
+span.oh-display-day-hide { /* this is used to hide the second day, if two consecutive days are shown.*/
 visibility: hidden;
 }
 span.oh-display-single {
