@@ -1,5 +1,5 @@
 <?php
-// $Id: office_hours.module,v 1.1.2.4 2008-07-19 20:31:21 ozeuss Exp $
+// $Id: office_hours.module,v 1.1.2.5 2008-07-21 05:12:30 ozeuss Exp $
 
 /**
  * @file
@@ -125,7 +125,7 @@ function office_hours_field_settings($op, $field) {
         //'#options' => array('validatehrs'=> t('Check that closing hours are not earlier than opening hours')),
         '#required' => FALSE,
         '#default_value' => isset($field['valhrs']) ? $field['valhrs'] : 0,
-        '#description' => t('Please note that this will work as long as the opening hours are not through midnight.'),
+        '#description' => t('Check that closing hours are not earlier than opening hours. Please note that this will work as long as the opening hours are not through midnight.'),
       );
       return $form;
 
@@ -220,7 +220,7 @@ function office_hours_field($op, &$node, $field, &$node_field, $teaser, $page) {
        return theme('field', $node, $field, $items, $teaser, $page);
 
     case 'validate':
-    if (isset($field['valhrs'])) { 
+    if ($field['valhrs'] == 1 ) { 
          if (is_array($node_field)) {
         foreach ($node_field as $delta => $item) {
        $error_field = $field['field_name']. '][' .$delta. '][endhours';
