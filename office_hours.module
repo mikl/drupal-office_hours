@@ -1,5 +1,5 @@
 <?php
-// $Id: office_hours.module,v 1.1.2.5 2008-07-21 05:12:30 ozeuss Exp $
+// $Id: office_hours.module,v 1.1.2.6 2008-07-22 05:01:04 ozeuss Exp $
 
 /**
  * @file
@@ -93,7 +93,7 @@ function office_hours_field_settings($op, $field) {
         '#options' => $options,
         '#default_value' => $field['limitstart']? $field['limitstart'] : FALSE, 
         '#required' => FALSE,
-        '#description' => t('Set the allowed start hours. Note: if you just changed the clock format, please submit before changing this.').tf_to_mil($field['limitstart']),
+        '#description' => t('Set the allowed start hours. Note: if you just changed the clock format, please submit before changing this.'),
       );
        $form['limitend'] = array(
         '#type' => 'select',
@@ -101,7 +101,7 @@ function office_hours_field_settings($op, $field) {
         '#options' => $options,
         '#default_value' => $field['limitend'] ? $field['limitend'] : FALSE,
         '#required' => FALSE,
-        '#description' => t('Set the allowed end hours. Note: if you just changed the clock format, please submit before changing this').tf_to_mil($field['limitend']),
+        '#description' => t('Set the allowed end hours. Note: if you just changed the clock format, please submit before changing this'),
       );
         $form['defaultstart'] = array(
         '#type' => 'select',
