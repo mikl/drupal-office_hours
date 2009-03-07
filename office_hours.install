@@ -27,3 +27,24 @@ function office_hours_enable() {
 function office_hours_disable() {
   content_notify('disable', 'office_hours');
 }
+
+/* We want to use integers on hours*/ 
+function office_hours_update_6000() {
+  $ret = array();
+  
+  drupal_load('module', 'content');
+  $result = db_query("SELECT * FROM {". content_instance_tablename() ."} WHERE widget_type = 'office_hours'");
+  while ($field_instance = db_fetch_array($result)) {
+		$name = $field_instance->field_name;
+  	$old = db_query("SELECT * FROM {content_".$name."}"); 
+  		while ($field = db_fetch_array($old)) {
+				$start = office_hours_tf_to_mil($field->$name."_starthours");
+				$end = office_hours_tf_to_mil($field->$name."_endhours");
+  			$ret[] = update_sql("UPDATE {content_".$name."} SET ".$name."_starthours = ".$start.",".$name."_endhours = ".$end." WHERE nid = %d", $field->nid);
+  		}		 	
+  	$ret[] = update_sql("ALTER TABLE {content_".$name."} CHANGE `".$name."_starthours` `".$name."_starthours` SMALLINT( 4 ) NULL DEFAULT NULL");
+  	$ret[] = update_sql("ALTER TABLE {content_".$name."} CHANGE `".$name."_endhours` `".$name."_endhours` SMALLINT( 4 ) NULL DEFAULT NULL");  
+  }
+  content_clear_type_cache(); 
+   return $ret;
+}
