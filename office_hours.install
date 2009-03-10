@@ -38,12 +38,14 @@ function office_hours_update_6000() {
 		$name = $field_instance->field_name;
   	$old = db_query("SELECT * FROM {content_".$name."}"); 
   		while ($field = db_fetch_array($old)) {
-				$start = office_hours_tf_to_mil($field->$name."_starthours");
-				$end = office_hours_tf_to_mil($field->$name."_endhours");
-  			$ret[] = update_sql("UPDATE {content_".$name."} SET ".$name."_starthours = ".$start.",".$name."_endhours = ".$end." WHERE nid = %d", $field->nid);
+  			list($hr, $min) = explode(":",$field->$name."_starthours");
+  			$start = $hr*60+$min;
+				list($hr, $min) = explode(":",$field->$name."_endhours");
+  			$end = $hr*60+$min;
+  			$ret[] = update_sql("UPDATE {content_".$name."} SET ".$name."_starthours = ".$start.",".$name."_endhours = ".$end." WHERE nid = %d AND delta = %d", $field->nid, $field->data);
   		}		 	
-  	$ret[] = update_sql("ALTER TABLE {content_".$name."} CHANGE `".$name."_starthours` `".$name."_starthours` SMALLINT( 4 ) NULL DEFAULT NULL");
-  	$ret[] = update_sql("ALTER TABLE {content_".$name."} CHANGE `".$name."_endhours` `".$name."_endhours` SMALLINT( 4 ) NULL DEFAULT NULL");  
+  	$ret[] = update_sql("ALTER TABLE {content_".$name."} CHANGE `".$name."_starthours` `".$name."_starthours` INT( 4 ) NULL DEFAULT NULL");
+  	$ret[] = update_sql("ALTER TABLE {content_".$name."} CHANGE `".$name."_endhours` `".$name."_endhours` INT( 4 ) NULL DEFAULT NULL");  
   }
   content_clear_type_cache(); 
    return $ret;
