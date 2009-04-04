@@ -1,5 +1,5 @@
 <?php
-// $Id: office_hours.module,v 1.1.2.1.2.3 2009-03-07 22:13:50 ozeuss Exp $
+// $Id: office_hours.module,v 1.1.2.1.2.4 2009-04-04 10:42:48 ozeuss Exp $
 
 /**
  * @file
@@ -236,8 +236,9 @@ function office_hours_field_formatter_info() {
 /**
  * Theme function for 'default' text field formatter.
  */
-function theme_office_hours_formatter_default($element) {    
+function theme_office_hours_formatter_default($element) {   
   $items = array();
+  $first = variable_get('date_first_day',0); 
   $field = content_fields($element['#field_name'], $element['#type_name']);
   $output = '';
   $days = array(0 => t('Sunday'), 1 => t('Monday'), 2 => t('Tuesday'),3 => t('Wednesday'), 4 => t('Thursday'), 5 => t('Friday'), 6 => t('Saturday') );
@@ -254,6 +255,16 @@ function theme_office_hours_formatter_default($element) {
     	$items[$day][] = array('strhrs' => $strhrs,'endhrs' => $endhrs) ;//we're aggregating hours for days together.	
 		}   
   }
+  
+  $keys = array_keys($items);
+  if ($keys[0] != $days[$first]) {
+   while ($keys[0] != $days[$first] && count($keys)>1):   
+    $shifted = array_shift($items);
+    $items[$keys[0]] = $shifted;
+    $keys = array_keys($items);
+  endwhile;
+  }
+  
   foreach ($items as $day => $val) {
   	$strhrs = $val[0]['strhrs'];
   	$endhrs = $val[0]['endhrs'];
@@ -282,7 +293,7 @@ function office_hours_widget_info() {
  * Implementation of FAPI hook_elements().
  *
  * Any FAPI callbacks needed for individual widgets can be declared here,
- * and the element will be passed to those callbacks for סלמון תנורprocessing.
+ * and the element will be passed to those callbacks for processing.
  *
  * Drupal will automatically theme the element using a theme with
  * the same name as the hook_elements key.
@@ -323,31 +334,31 @@ function office_hours_widget(&$form, &$form_state, $field, $items, $delta = 0) {
  * The $fields array is in $form['#field_info'][$element['#field_name']].
  */
 function office_hours_field_process($element, $edit, $form_state, $form) { 
-  static $iteration = 0; //we'll use this in order to determine what default day to display
+  $iteration = $element['#weight'];
   $field = $form['#field_info'][$element['#field_name']];
   if ($field['multiple'] > 7) {
 		$day = ($iteration == 0) ? 0 :(($iteration & 1) ? ($iteration-1)/2 : $iteration/2);
 	}
   else {
   	$day = $iteration;
-  }
+ }
   $field_day = $element['#columns'][0];
   $field_strhrs = $element['#columns'][1];
   $field_endhrs = $element['#columns'][2];  
   $delta = $element['#delta'];
   $optionshr= _create_hours_arr($field, TRUE);
   $optionday= array(0 => t('Sunday'), 1 => t('Monday'), 2 => t('Tuesday'),3 => t('Wednesday'), 4 => t('Thursday'), 5 => t('Friday'), 6 => t('Saturday'), 7=> t('None'));
-  
-  if ( $field['multiple'] == '7' || ($field['multiple'] == '14' && !($iteration & 1 )) ) {
- 		$element['day_markup'] = array(
-  		'#value' => '<div class="office-hours-block" style="display:inline">'.t($optionday[$day]),
-  	);
+ $element['#prefix'] = '<div class="office-hours-block" style="display:inline">';
+ 
+ if ( $field['multiple'] == '7' || ($field['multiple'] == '14' && !($iteration & 1 )) ) {
+    $element['#prefix'] .= t($optionday[$day]);
   }
   else {
-  	$element['day_markup'] = array(
-  		'#value' => '<div class="office-hours-block" style="display:inline">'.t('Additional hours:'),
-  	);
+     $element['#prefix'] .= t('Additional hours:');
   }
+  
+  $element['#suffix'] = '</div>';
+
   $element[$field_day] = array(
     '#type' => 'value',
     '#value' => $day,
@@ -362,14 +373,13 @@ function office_hours_field_process($element, $edit, $form_state, $form) {
  );
  $element[$field_endhrs] = array(
     '#type' => 'select',
-    '#title' => t('Until'),
+    '#title' => t('Until').$suffix,
     '#description' => t($field['widget']['description']),
     '#options' =>  $optionshr,
     '#required' => $field['required'],
     '#default_value' => ($element['#value']['day'] == $day && isset($element['#value'][$field_endhrs])) ? $element['#value'][$field_endhrs] : '',
  );
   $form_state['#field_info'][$field['field_name']] = $field;
-  $iteration++;
   return $element;
 }
 
@@ -406,7 +416,7 @@ function theme_office_hours_multiple_values($element) {
       }
     }
     usort($items, '_content_sort_items_value_helper');
-
+    $items = _office_hours_arrange_day($items);
     // Add the items as table rows.
     foreach ($items as $key => $item) {
       $item['_weight']['#attributes']['class'] = $order_class;
@@ -416,6 +426,7 @@ function theme_office_hours_multiple_values($element) {
         drupal_render($item),
         //array('data' => $delta_element, 'class' => 'delta-order'),
       );
+      
       $rows[] = array(
         'data' => $cells,
         //'class' => 'draggable',
@@ -445,6 +456,20 @@ function office_hours_views_api() {
     'api' => 2,
     'path' => drupal_get_path('module', 'office_hours') . '/includes',
   );
+}
+
+function _office_hours_arrange_day ($items) {
+  $first = variable_get('date_first_day',0); 
+    while ($first > 0) :
+      $shifted = array_shift($items);
+      $items[] = $shifted;
+      if (isset($items[13])) {
+        $shifted = array_shift($items);
+        $items[] = $shifted;
+      }
+      $first--;
+    endwhile;
+  return $items;
 }
 
 /**
