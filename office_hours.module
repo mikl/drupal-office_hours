@@ -2,7 +2,7 @@
 // $Id: office_hours.module,v 1.1.2.1.2.4 2009-04-04 10:42:48 ozeuss Exp $
 
 /**
- * @file
+ * @file office_hours.module
  * Creates a field and widget for inserting working or office hours per day
  */
 
@@ -49,9 +49,9 @@ function office_hours_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * implementation of hook_init.
+ * Implementation of hook_init().
  */
-function office_hours_init () {
+function office_hours_init() {
     drupal_add_css(drupal_get_path('module', 'office_hours') .'/office_hours.css');
 }
 
@@ -66,7 +66,7 @@ function office_hours_content_is_empty($item, $field) {
 }
 
 /**
- * Implementation of hook_field_info
+ * Implementation of hook_field_info().
  *
  * @return
  *   An array keyed by field type name. Each element of the array is an associative
@@ -77,17 +77,13 @@ function office_hours_field_info() {
   return array(
     'office_hours' => array(
     	'label' => 'Office Hours',
-    	'description' => t('Store office or opening hours in the database.'),
-    	'callbacks'=> array (
-    	'tables'=> CONTENT_CALLBACK_DEFAULT,
-    	'arguments'=> CONTENT_CALLBACK_DEFAULT,
-    	),
-     ),
+      'description' => t('Store office or opening hours in the database.'),
+    ),
   );
 }
 
 /**
- * implementation of hook_field 
+ * Implementation of hook_field_settings().
  * Handle the parameters for a field.
  */
 function office_hours_field_settings($op, $field) {
@@ -197,23 +193,22 @@ function office_hours_field_settings($op, $field) {
 }
 
 /**
- * implementation of hook_field
- * 
+ * Implementation of hook_field().
  */
- function office_hours_field($op, &$node, $field, &$items, $teaser, $page) {
+function office_hours_field($op, &$node, $field, &$items, $teaser, $page) {
   switch ($op) {
     case 'validate':
-       // drupal_set_message('<pre>'.print_r($field,true).'</pre>');
+      // drupal_set_message('<pre>'.print_r($field,true).'</pre>');
       foreach ($items as $delta => $item) {
         if (isset($field['valhrs']) ) {
-         if (!empty($item['starthours']) && !empty($item['endhours']) ) {
-           $error_field = $field['field_name'] .']['. $delta .'][endhours';
-          /* $starthours = _office_hours_tf_to_mil($item['starthours']);
-           $endhours = _office_hours_tf_to_mil($item['endhours']);*/
-             if ($item['starthours'] > $item['endhours']) {
-                form_set_error($error_field, t('Closing hours are earlier than opening hours'));
-             }
-           }
+          if (!empty($item['starthours']) && !empty($item['endhours']) ) {
+            $error_field = $field['field_name'] .']['. $delta .'][endhours';
+            /* $starthours = _office_hours_tf_to_mil($item['starthours']);
+            $endhours = _office_hours_tf_to_mil($item['endhours']);*/
+            if ($item['starthours'] > $item['endhours']) {
+              form_set_error($error_field, t('Closing hours are earlier than opening hours'));
+            }
+          }
         }
       }
     break;
@@ -221,12 +216,13 @@ function office_hours_field_settings($op, $field) {
 }
 
 /**
+ * Implementation of hook_field_formatter_info().
  * Declare information about a formatter.
  */
 function office_hours_field_formatter_info() {
   return array(
     'default' => array(
-      'label' => 'default',
+      'label' => 'week overview',
       'field types' => array('office_hours'),
       'multiple values' => CONTENT_HANDLE_MODULE,
     ),
