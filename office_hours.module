@@ -718,13 +718,13 @@ $i=0;
  */
 function _office_hours_day_names() {
   return array(
+    'sun' => t('Sunday'),
     'mon' => t('Monday'),
     'tue' => t('Tuesday'),
     'wed' => t('Wednesday'),
     'thu' => t('Thursday'),
     'fri' => t('Friday'),
     'sat' => t('Saturday'),
-    'sun' => t('Sunday'),
   );
 }
 
