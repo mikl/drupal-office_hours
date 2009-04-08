@@ -88,6 +88,27 @@ function office_hours_field_info() {
  */
 function office_hours_field_settings($op, $field) {
   switch ($op) {
+    case 'database columns':
+      $columns = array();
+      $columns['scope'] = array(
+        'type' => 'varchar',
+        'length' => '10',
+        'description' => t('Scope for this office hours record, one of "all", "odd", "even", or a ISO 8601 week number - like "2009W07"'),
+      );
+      foreach (array_keys(_office_hours_day_names()) as $abbr) {
+        $columns[$abbr . '_start'] = array(
+          'type' => 'varchar',
+          'pgsql_type' => 'time',
+          'mysql_type' => 'time',
+        );
+        $columns[$abbr . '_end'] = array(
+          'type' => 'varchar',
+          'pgsql_type' => 'time',
+          'mysql_type' => 'time',
+        );
+      }
+      return $columns;
+      break;
     case 'form':
     $options = _create_hours_arr($field, FALSE);
     $optlim = _create_hours_arr($field);
@@ -691,3 +712,19 @@ $i=0;
     // TODO: provide automatic filters, sorts, and arguments for each column, not just the first?
     return array($table_alias => $data);
 }
+
+/**
+ * Return day names, keyed by their abbreviation.
+ */
+function _office_hours_day_names() {
+  return array(
+    'mon' => t('Monday'),
+    'tue' => t('Tuesday'),
+    'wed' => t('Wednesday'),
+    'thu' => t('Thursday'),
+    'fri' => t('Friday'),
+    'sat' => t('Saturday'),
+    'sun' => t('Sunday'),
+  );
+}
+
