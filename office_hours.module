@@ -95,7 +95,9 @@ function office_hours_field_settings($op, $field) {
         'length' => '10',
         'description' => t('Scope for this office hours record, one of "all", "odd", "even", or a ISO 8601 week number - like "2009W07"'),
       );
-      foreach (array_keys(_office_hours_day_names()) as $abbr) {
+      foreach (_office_hours_day_names() as $abbr) {
+        # Drupals db_type_map doesn't have time fields, so we override
+        # it by selecting the field type for the individual databases.
         $columns[$abbr . '_start'] = array(
           'type' => 'varchar',
           'pgsql_type' => 'time',
@@ -714,17 +716,10 @@ $i=0;
 }
 
 /**
- * Return day names, keyed by their abbreviation.
+ * Return short day names, in the same order used by date API so we can
+ * use its sorting function.
  */
 function _office_hours_day_names() {
-  return array(
-    'sun' => t('Sunday'),
-    'mon' => t('Monday'),
-    'tue' => t('Tuesday'),
-    'wed' => t('Wednesday'),
-    'thu' => t('Thursday'),
-    'fri' => t('Friday'),
-    'sat' => t('Saturday'),
-  );
+  return array('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat');
 }
 
