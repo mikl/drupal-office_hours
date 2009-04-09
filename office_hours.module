@@ -186,13 +186,13 @@ function office_hours_field_formatter_info() {
  */
 function office_hours_widget_info() {
   return array(
-    'office_hours' => array(
-      'label' => t('Office Hours'),
+    'office_hours_week' => array(
+      'label' => t('Week overview'),
       'field types' => array('office_hours'),
       'multiple values' => CONTENT_HANDLE_CORE,
       'callbacks' => array(
         'default value' => CONTENT_CALLBACK_DEFAULT,
-        ),
+      ),
     ),
   );
 }
@@ -205,9 +205,6 @@ function office_hours_elements() {
   return _office_hours_elements();
 }
 
-function theme_office_hours($element) { 
-  return $element['#children'];
-}
 
 /**
  * Implementation of hook_widget().

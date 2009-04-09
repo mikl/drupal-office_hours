@@ -41,7 +41,7 @@ function _office_hours_elements() {
  * note that $element['#value'] is already set.
  * The $fields array is in $form['#field_info'][$element['#field_name']].
  */
-function office_hours_field_process($element, $edit, $form_state, $form) { 
+function office_hours_week_process($element, $edit, $form_state, $form) { 
   $values = $element['#value'];
   $day_abbr = date_week_days_ordered(_office_hours_day_names());
   $day_names = date_week_days_ordered(date_week_days(TRUE));

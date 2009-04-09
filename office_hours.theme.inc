@@ -24,6 +24,10 @@ function theme_office_hours_formatter_default($element) {
   return $output;     
 }
 
+function theme_office_hours($element) { 
+  return $element['#children'];
+}
+
 /**
  * Theme office hours for a specific date.
  *
