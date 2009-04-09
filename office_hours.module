@@ -12,40 +12,18 @@
 function office_hours_theme() {
   return array(
     'office_hours_formatter_default' => array (
-    	'arguments' => array ('element' => NULL),
+    	'arguments' => array('element' => NULL),
     ),
-    'office_hours'  => array (
-    	'arguments' => array ('element' => NULL),
+    'office_hours'  => array(
+    	'arguments' => array('element' => NULL),
     ),
     'office_hours_multiple_values' => array(
       'arguments' => array('element' => NULL),
     ),
+    'office_hours_format_day' => array(
+      'arguments' => array('name' => NULL, 'start' => NULL, 'end' => NULL),
+    ),
   );
-}
-
-function office_hours_form_alter(&$form, &$form_state, $form_id) {
-	if ($form_id == 'content_field_edit_form') {
-		if($form['#field']['type'] == 'office_hours') {
-			$description = t('Number of field that will show.');
- 			$description .= '<br/><strong>'. t('Warning! Changing this setting after data has been created could result in the loss of data!') .'</strong>';
-  			$form['field']['multiple'] = array(
-    			'#type' => 'select',
-    			'#title' => t('Number of values'),
-    			'#options' => drupal_map_assoc(array(7,14)),
-    			'#default_value' => isset($form['field']['multiple']) ? $form['field']['multiple'] : 7,
-    			'#description' => $description,
-  			);	
-		}
-	}
-	if (isset($form['type']) && isset($form['#node']) && $form['type']['#value'] .'_node_form' == $form_id) {
-		$type = content_types($form['#node']->type);
-	//	dpm($form);dpm($type);
-		foreach ($type['fields'] as $field) {
-			if ($field['type'] == 'office_hours') {
-				$form[$field['field_name']]['#theme'] = 'office_hours_multiple_values';
-			}
-		}
-	}
 }
 
 /**
@@ -245,7 +223,7 @@ function office_hours_field($op, &$node, $field, &$items, $teaser, $page) {
 function office_hours_field_formatter_info() {
   return array(
     'default' => array(
-      'label' => 'week overview',
+      'label' => t('Week overview'),
       'field types' => array('office_hours'),
       'multiple values' => CONTENT_HANDLE_MODULE,
     ),
@@ -256,45 +234,22 @@ function office_hours_field_formatter_info() {
  * Theme function for 'default' text field formatter.
  */
 function theme_office_hours_formatter_default($element) {   
-  $items = array();
-  $first = variable_get('date_first_day',0); 
-  $field = content_fields($element['#field_name'], $element['#type_name']);
   $output = '';
-  $days = array(0 => t('Sunday'), 1 => t('Monday'), 2 => t('Tuesday'),3 => t('Wednesday'), 4 => t('Thursday'), 5 => t('Friday'), 6 => t('Saturday') );
-  foreach (element_children($element) as $key => $arraykey) {
-    $item = $element[$arraykey]['#item'];
-    $day = $days[check_plain($element[$arraykey]['#item']['day'])];
-    if (isset($day)) { 
- 			$endhrs = _office_hours_mil_to_tf(check_plain($item['endhours']));
-    	$strhrs = _office_hours_mil_to_tf(check_plain($item['starthours']));  
-			if ($field['hoursformat']== 1) {
-     		$endhrs = _office_hours_convert_to_ampm($endhrs);
-      	$strhrs = _office_hours_convert_to_ampm($strhrs);
-    	}
-    	$items[$day][] = array('strhrs' => $strhrs,'endhrs' => $endhrs) ;//we're aggregating hours for days together.	
-		}   
-  }
-  
-  $keys = array_keys($items);
-  if ($keys[0] != $days[$first]) {
-   while ($keys[0] != $days[$first] && count($keys)>1):   
-    $shifted = array_shift($items);
-    $items[$keys[0]] = $shifted;
-    $keys = array_keys($items);
-  endwhile;
-  }
-  
-  foreach ($items as $day => $val) {
-  	$strhrs = $val[0]['strhrs'];
-  	$endhrs = $val[0]['endhrs'];
-  	$strhrs2 = $val[1]['strhrs'];
-  	$endhrs2 = $val[1]['endhrs'];
-		$additional = (isset($val[1])) ? ' <span class="oh-display-hours">, '.$strhrs2.' - '.$endhrs.'</span>' : '';
-  	$output .= '<div class="oh-display">'.$day.'- <span class="oh-display-hours">'.$strhrs.' - '.$endhrs.'</span>'.$additional.'</div>';
+  $values = $element[0]['#item'];
+  $day_abbr = date_week_days_ordered(_office_hours_day_names());
+  $day_names = date_week_days_ordered(date_week_days(TRUE));
+
+  foreach ($day_abbr as $num => $day) {
+    if (!empty($values[$day . '_start']) && !empty($values[$day . '_end'])) {
+      $output .= theme('office_hours_format_day', $day_names[$num], $values[$day . '_start'], $values[$day . '_end']);
+    }
   }
   return $output;     
 }
 
+/**
+ * Implementation of hook_widget_info().
+ */
 function office_hours_widget_info() {
   return array(
     'office_hours' => array(
@@ -713,6 +668,25 @@ $i=0;
    $data['field_hours_endhours']['help'] .=  t("- Closing hours");
     // TODO: provide automatic filters, sorts, and arguments for each column, not just the first?
     return array($table_alias => $data);
+}
+
+/**
+ * Theme office hours for a specific date.
+ *
+ * @param string $name
+ *    The name of the day.
+ * @param string $start
+ *    Start time.
+ * @param string $end
+ *    End time.
+ * @return string
+ *    HTML-formatted closing hours for that day.
+ */
+function theme_office_hours_format_day($name, $start, $end) {
+  $output = '<div class="oh-display">' . $name;
+  $output .= ' <span class="hours start">' . $start . '</span>';
+  $output .= '– <span class="hours end">' . $end . '</span></div>';
+  return $output;
 }
 
 /**
