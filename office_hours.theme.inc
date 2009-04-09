@@ -24,7 +24,17 @@ function theme_office_hours_formatter_default($element) {
   return $output;     
 }
 
-function theme_office_hours($element) { 
+/**
+ * Theme function for the office hours week form element.
+ */
+function theme_office_hours_week($element) {
+  return $element['#children'];
+}
+
+/**
+ * Theme function for the office hours day form element.
+ */
+function theme_office_hours_day($element) {
   return $element['#children'];
 }
 

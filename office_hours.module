@@ -15,7 +15,11 @@ function office_hours_theme() {
     	'arguments' => array('element' => NULL),
       'file' => 'office_hours.theme.inc',
     ),
-    'office_hours' => array(
+    'office_hours_week' => array(
+    	'arguments' => array('element' => NULL),
+      'file' => 'office_hours.theme.inc',
+    ),
+    'office_hours_day' => array(
     	'arguments' => array('element' => NULL),
       'file' => 'office_hours.theme.inc',
     ),
