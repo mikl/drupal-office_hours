@@ -28,14 +28,35 @@ function theme_office_hours_formatter_default($element) {
  * Theme function for the office hours week form element.
  */
 function theme_office_hours_week($element) {
-  return $element['#children'];
+  return theme('fieldset', $element);
 }
 
 /**
  * Theme function for the office hours day form element.
+ *
+ * Most of this is copied from theme_form_element.
  */
 function theme_office_hours_day($element) {
-  return $element['#children'];
+  $output .= '<div class="' . $element['#attributes']['class'] . '"';
+  if (!empty($element['#id'])) {
+    $output .= ' id="'. $element['#id'] .'"';
+  }
+  $output .= '>';
+
+  $required = !empty($element['#required']) ? '<span class="form-required" title="'. $t('This field is required.') .'">*</span>' : '';
+  if (!empty($element['#title'])) {
+    $output .= ' <h6>'. t('!title: !required', array('!title' => filter_xss_admin($element['#title']), '!required' => $required)) .'</h6>';
+  }
+
+  $output .= $element['#children'] . '</div>';
+  return $output;
+}
+
+/**
+ * Theme function for the office hours selector element.
+ */
+function theme_office_hours_select($element) {
+  return theme('form_element', $element, $element['#children']);
 }
 
 /**

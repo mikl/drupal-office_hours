@@ -23,6 +23,10 @@ function office_hours_theme() {
     	'arguments' => array('element' => NULL),
       'file' => 'office_hours.theme.inc',
     ),
+    'office_hours_select' => array(
+    	'arguments' => array('element' => NULL),
+      'file' => 'office_hours.theme.inc',
+    ),
     'office_hours_multiple_values' => array(
       'arguments' => array('element' => NULL),
       'file' => 'office_hours.theme.inc',
@@ -165,6 +169,16 @@ function office_hours_field($op, &$node, $field, &$items, $teaser, $page) {
               form_set_error($error_field, t('Closing hours are earlier than opening hours'));
             }
           }
+        }
+      }
+      break;
+    case 'presave':
+      // Unpack the array of start and end time, so they'll get stored
+      // in the database.
+      foreach ($items as $delta => $week) {
+        foreach($week as $day => $values) {
+          $items[$delta][$day . '_start'] = $values['start'];
+          $items[$delta][$day . '_end'] = $values['end'];
         }
       }
       break;

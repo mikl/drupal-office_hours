@@ -25,11 +25,17 @@ function _office_hours_elements() {
       '#process' => array('office_hours_day_process'),
       '#element_validate' => array('office_hours_day_validate'),
     ),
+    'office_hours_select' => array(
+      '#input' => TRUE,
+      '#tree' => TRUE,
+      '#process' => array('office_hours_select_process'),
+      '#element_validate' => array('office_hours_select_validate'),
+    ),
   );
 }
 
 /*
- * Process an individual element.
+ * Process the week element.
  *
  * Build the form element. When creating a form using FAPI #process,
  * note that $element['#value'] is already set.
@@ -57,64 +63,101 @@ function office_hours_week_process($element, $edit, $form_state, $form) {
 }
 
 /**
+ * Validate the week element.
+ */
+function office_hours_week_validate($element, &$form_state) {
+}
+
+/**
  * Process the office hour day element.
  */
 function office_hours_day_process($element) {
+  $day = $element['#day_name'];
+
+  _form_set_class($element, array('oh-day ' . $day));
+
+  $element['start'] = array(
+    '#type' => 'office_hours_select',
+    '#title' => t('From'),
+    '#default_value' => $element['#default_start'],
+  );
+
+  $element['end'] = array(
+    '#type' => 'office_hours_select',
+    '#title' => t('To'),
+    '#default_value' => $element['#default_end'],
+  );
+
+  return $element;
+}
+
+/**
+ * Validate the day element.
+ */
+function office_hours_day_validate($element, &$form_state) {
+  $day = $element['#day_name'];
+  $start = $element['#value']['start'];
+  $end = $element['#value']['end'];
+  $values = array();
+  if (!empty($start['hours']) && !empty($end['hours'])) {
+    if (intval($start['hours']) > intval($end['hours']) || (intval($start['hours']) == intval($end['hours']) && (intval($start['minutes']) >= intval($end['minutes'])))) {
+      form_error($element, t('End hours cannot occur before start hours.'));
+    }
+    else {
+      $values['start'] = sprintf('%02u:%02u', $start['hours'], $start['minutes']);
+      $values['end'] = sprintf('%02u:%02u', $end['hours'], $end['minutes']);
+    }
+  }
+  form_set_value($element, $values, $form_state);
+}
+
+/**
+ * Process the hours selector element.
+ */
+function office_hours_select_process($element) {
   $hours = date_hours();
   $minutes = date_minutes('i', FALSE, 30);
+  $day = $element['#day_name'];
 
-  $element['#prefix'] = '<div class="oh-day ' . $element['#day_name'] . '">';
-  $element['#suffix'] = '</div>';
 
-  $element['title'] = array(
-    '#value' => '<h4 class="title">' . $element['#title'] . '</h4>',
-  );
-
-  $element['hours_start'] = array(
+  $element['hours'] = array(
     '#type' => 'select',
     '#options' => $hours,
-    '#prefix' => '<div class="from clear-block"><label>' . t('From') . '</label>',
   );
 
-  $element['minutes_start'] = array(
+  $element['minutes'] = array(
     '#type' => 'select',
     '#options' => $minutes,
-    '#suffix' => '</div>',
-  );
-
-  $element['hours_end'] = array(
-    '#type' => 'select',
-    '#options' => $hours,
-    '#prefix' => '<div class="to clear-block"><label>' . t('To') . '</label>',
-  );
-
-  $element['minutes_end'] = array(
-    '#type' => 'select',
-    '#options' => $minutes,
-    '#suffix' => '</div>',
   );
 
   # Default values need a bit of special treatment here, since the value 
   # that's coming from the database is a zerofilled string that does not 
   # match the options, since they are cast to integer by Drupal.
-  if (!empty($element['#default_start'])) {
-    $start_val = explode(':', $element['#default_start']);
-    if (isset($start_val[0]) && !empty($start_val[0])) {
-      $element['hours_start']['#default_value'] = intval($start_val[0]);
-    }
-    if (isset($start_val[1]) && !empty($start_val[1])) {
-      $element['minutes_start']['#default_value'] = intval($start_val[1]);
-    }
-  }
-  if (!empty($element['#default_end'])) {
-    $end_val = explode(':', $element['#default_end']);
+  if (!empty($element['#default_value'])) {
+    $end_val = explode(':', $element['#default_value']);
     if (isset($end_val[0]) && !empty($end_val[0])) {
-      $element['hours_end']['#default_value'] = intval($end_val[0]);
+      $element['hours']['#default_value'] = intval($end_val[0]);
     }
     if (isset($end_val[1]) && !empty($end_val[1])) {
-      $element['minutes_end']['#default_value'] = intval($end_val[1]);
+      $element['minutes']['#default_value'] = intval($end_val[1]);
     }
   }
   return $element;
+}
+
+/**
+ * Validate the hours selector element.
+ */
+function office_hours_select_validate($element, &$form_state) {
+  $hours = intval($element['#value']['hours']);
+  $minutes = intval($element['#value']['minutes']);
+
+
+  if ($hours < 0 || $hours > 23) {
+    form_error($element, t('Hours should be between 0 and 23.'));
+  }
+  if ($minutes < 0 || $minutes > 59) {
+    form_error($element, t('Minutes should be between 0 and 59.'));
+  }
 }
 
