@@ -1,8 +1,9 @@
 ; $Id: office_hours.info,v 1.1.4.1 2008-03-19 18:03:53 ozeuss Exp $ 
-name = office hours
+name = Office hours
 description = Defines an office hours field for cck
 package = CCK
 dependencies[] = content
 dependencies[] = date_api
 core = 6.x
+version = "6.x-2.0-alpha1"
 
