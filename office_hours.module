@@ -49,10 +49,14 @@ function office_hours_init() {
  * Implementation of hook_content_is_empty().
  */
 function office_hours_content_is_empty($item, $field) {
-  if ( $item['starthours'] == 'none' || $item['endhours'] == 'none' || $item['day'] == 7)  {
-    return TRUE;
+  // Check if one of the days have a start hour. If not, we consider
+  // the field to be empty.
+  foreach (_office_hours_day_names() as $name) {
+    if (!empty($item[$name . '_start'])) {
+      return FALSE;
+    }
   }
-  return FALSE;
+  return TRUE;
 }
 
 /**
