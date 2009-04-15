@@ -12,7 +12,7 @@
  * Implementation of hook_elements().
  */
 function _office_hours_elements() {
-  return array(
+  $elements = array(
     'office_hours_week' => array(
       '#input' => TRUE,
       '#tree' => TRUE,
@@ -32,9 +32,14 @@ function _office_hours_elements() {
       '#element_validate' => array('office_hours_select_validate'),
     ),
   );
+
+  if (function_exists('office_hours_week_hs_process')) {
+    $elements['office_hours_week']['#process'][] = 'office_hours_week_hs_process';
+  }
+  return $elements;
 }
 
-/*
+/**
  * Process the week element.
  *
  * Build the form element. When creating a form using FAPI #process,
