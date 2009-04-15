@@ -6,19 +6,20 @@
  * Office hours theming functions.
  */
 
-
 /**
  * Theme function for 'default' text field formatter.
  */
 function theme_office_hours_formatter_default($element) {   
   $output = '';
   $values = $element[0]['#item'];
+  $week = _office_hours_resolve_week($element);
+  $week_data = array_shift($week);
   $day_abbr = date_week_days_ordered(_office_hours_day_names());
   $day_names = date_week_days_ordered(date_week_days(TRUE));
 
   foreach ($day_abbr as $num => $day) {
-    if (!empty($values[$day . '_start']) && !empty($values[$day . '_end'])) {
-      $output .= theme('office_hours_format_day', $day_names[$num], $values[$day . '_start'], $values[$day . '_end']);
+    if (isset($week[$day]) && !empty($week[$day])) {
+      $output .= theme('office_hours_format_day', $day_names[$num], $week[$day]);
     }
   }
   return $output;     
@@ -71,15 +72,17 @@ function theme_office_hours_select($element) {
  * @return string
  *    HTML-formatted closing hours for that day.
  */
-function theme_office_hours_format_day($name, $start, $end) {
+function theme_office_hours_format_day($name, $values) {
   $output = '<div class="oh-display">' . $name;
-  $output .= ' <span class="hours start">' . _office_hours_format_time($start) . '</span>';
-  $output .= ' – <span class="hours end">' . _office_hours_format_time($end) . '</span></div>';
-  return $output;
+  foreach ($values as $val) {
+    $output .= ' <span class="hours start">' . _office_hours_format_time($val['start']) . '</span>';
+    $output .= ' – <span class="hours end">' . _office_hours_format_time($val['end']) . '</span>';
+  }
+  return $output . '</div>';
 }
 
 /**
- * copied from content module's theme_content_multiple values- we're taking out the draggable feature.
+ * Copied from content module's theme_content_multiple values- we're taking out the draggable feature.
  * Theme an individual form element.
  *
  */

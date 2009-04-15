@@ -54,6 +54,18 @@ function office_hours_week_process($element, $edit, $form_state, $form) {
   $element['#prefix'] = '<div class="oh-week element clear-block">';
   $element['#suffix'] = '</div>';
 
+  $element['scope'] = array(
+    '#type' => 'select',
+    '#title' => t('Scope'),
+    '#description' => t('Select which weeks these hours apply to'),
+    '#options' => array(
+      'all' => t('Every week'),
+      'odd' => t('Odd numbered weeks'),
+      'even' => t('Even numbered weeks'),
+    ),
+    '#default_value' => $values['scope'],
+  );
+
   foreach ($day_abbr as $num => $day) {
     $element[$day] = array(
       '#type' => 'office_hours_day',

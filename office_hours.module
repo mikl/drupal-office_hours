@@ -12,7 +12,7 @@
 function office_hours_theme() {
   return array(
     'office_hours_formatter_default' => array (
-    	'arguments' => array('element' => NULL),
+      'arguments' => array('element' => NULL),
       'file' => 'office_hours.theme.inc',
     ),
     'office_hours_week' => array(
@@ -232,6 +232,62 @@ function office_hours_views_api() {
     'api' => 2,
     'path' => drupal_get_path('module', 'office_hours') . '/includes',
   );
+}
+
+/**
+ * Helper function for week resolution.
+ *
+ * Resolves multiple values into a single value with one or more periods
+ * per day, matching the current week or the one specified.
+ */
+function _office_hours_resolve_week($element) {
+  $week_num = intval(date('W'));
+  $week_num_year = date('Y\WW');
+  $week_kind = ($week_num % 2) ? 'odd' : 'even';
+  $values = array();
+  $week = array('#data' => array(
+    'number' => $week_num,
+    'year_and_number' => $week_num_year,
+    'kind' => $week_kind,
+  ));
+
+  // First, sort the values by specificity. Specific weeks, odd, even
+  // and all into the
+  foreach ($element as $key => $row) {
+    if (strpos($key, '#') === FALSE && isset($row['#item']['scope'])) {
+      $values[$row['#item']['scope']][] = $row['#item'];
+    }
+  }
+
+  // Pick the most specific one available that matches the selected week.
+  if (isset($values[$week_num_year])) {
+    $pick = $values[$week_num_year];
+    // Store what level of specificity was used in the week data.
+    $week['#data']['specificity'] = 'precise';
+  }
+  elseif (isset($values[$week_kind])) {
+    $pick = $values[$week_kind];
+    $week['#data']['specificity'] = 'even_odd';
+  }
+  elseif (isset($values['all'])) {
+    $pick = $values['all'];
+    $week['#data']['specificity'] = 'all';
+  }
+  else {
+    $pick = array();
+    $week['#data']['specificity'] = 'none';
+  }
+
+  // Then sort the multiple values into days.
+  foreach ($pick as $delta => $row) {
+    foreach (_office_hours_day_names() as $day) {
+      if (!empty($row[$day . '_start'])) {
+        $week[$day][$delta]['start'] = $row[$day . '_start'];
+        $week[$day][$delta]['end'] = $row[$day . '_end'];
+      }
+    }
+  }
+  return $week;
 }
 
 /**
