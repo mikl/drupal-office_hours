@@ -13,6 +13,7 @@ function office_hours_theme() {
   return array(
     'office_hours_formatter_default' => array (
       'arguments' => array('element' => NULL),
+      'template' => 'office_hours_formatter_default',
       'file' => 'office_hours.theme.inc',
     ),
     'office_hours_week' => array(
@@ -312,5 +313,34 @@ function _office_hours_format_time($time) {
  */
 function _office_hours_day_names() {
   return array('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat');
+}
+
+/**
+ * Return the ISO-8601 weekday numbers.
+ *
+ * @return array
+ *    Day number, keyed by their abbreviated day name.
+ */
+function _office_hours_iso_day_num() {
+  return array(
+    'mon' => 1, 'tue' => 2, 'wed' => 3, 'thu' => 4,
+    'fri' => 5, 'sat' => 6, 'sun' => 7,
+  );
+}
+
+/**
+ * Find the start and end days that of a week.
+ *
+ * @param string $week
+ *    Week/year in ISO-8601 format (ie. 2009W34).
+ * @return array
+ *    Timestamps for the start and end dates of the week.
+ */
+function _office_hours_week_days($week) {
+  // TODO: This approach only works when we're following ISO-8601,
+  // ie. the first day of the week is monday.
+  $start = strtotime($week);
+  $end = strtotime($week . 7);
+  return array('start' => $start, 'end' => $end);
 }
 

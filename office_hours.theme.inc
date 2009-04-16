@@ -7,22 +7,18 @@
  */
 
 /**
- * Theme function for 'default' text field formatter.
+ * Preprocess hook for default field formatter.
  */
-function theme_office_hours_formatter_default($element) {   
-  $output = '';
-  $values = $element[0]['#item'];
-  $week = _office_hours_resolve_week($element);
-  $week_data = array_shift($week);
-  $day_abbr = date_week_days_ordered(_office_hours_day_names());
-  $day_names = date_week_days_ordered(date_week_days(TRUE));
-
-  foreach ($day_abbr as $num => $day) {
-    if (isset($week[$day]) && !empty($week[$day])) {
-      $output .= theme('office_hours_format_day', $day_names[$num], $week[$day]);
-    }
-  }
-  return $output;     
+function office_hours_preprocess_office_hours_formatter_default(&$vars) {
+  $vars['week'] = _office_hours_resolve_week($vars['element']);
+  $vars['week_data'] = array_shift($vars['week']);
+  $days = _office_hours_week_days($vars['week_data']['year_and_number']);
+  $vars['start_day'] = format_date($days['start'], 'custom', 'd/m');
+  $vars['end_day'] = format_date($days['end'], 'custom', 'd/m');
+  $vars['day_abbr'] = date_week_days_ordered(_office_hours_day_names());
+  $vars['day_names'] = date_week_days_ordered(date_week_days(TRUE));
+  $vars['week_num_text'] = t('Week @week_num', array('@week_num' => $week_data['number']));
+  return $vars;
 }
 
 /**
