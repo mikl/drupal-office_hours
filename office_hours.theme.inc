@@ -17,7 +17,18 @@ function office_hours_preprocess_office_hours_formatter_default(&$vars) {
   $vars['end_day'] = format_date($days['end'], 'custom', 'd/m');
   $vars['day_abbr'] = date_week_days_ordered(_office_hours_day_names());
   $vars['day_names'] = date_week_days_ordered(date_week_days(TRUE));
-  $vars['week_num_text'] = t('Week @week_num', array('@week_num' => $week_data['number']));
+  $vars['week_num_text'] = t('Week @week_num', array('@week_num' => $vars['week_data']['number']));
+  $vars['node'] = $vars['element']['#node'];
+
+  drupal_add_js(array('officeHours' => array($vars['node']->nid => array(
+    'year' => $vars['week_data']['year'],
+    'week' => $vars['week_data']['number'],
+    'nid' => $vars['node']->nid,
+    'callback' => url('office_hours/js/change_week'),
+    'field_name' => $vars['element']['#field_name'],
+  ))), 'setting');
+  drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.js');
+
   return $vars;
 }
 
