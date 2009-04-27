@@ -159,6 +159,12 @@ function office_hours_field_settings($op, $field) {
         '#default_value' => isset($field['validate_hours']) ? $field['validate_hours'] : 0,
         '#description' => t('Please note that this will work as long as the opening hours are not through midnight.'),
       );
+      $form['display_none_as_closed'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Display days as closed'),
+        '#default_value' => isset($field['display_none_as_closed']) ? $field['display_none_as_closed'] : 0,
+        '#description' => t('Display days where no opening hours are defined as “Closed”. If not checked, those days will not be listed.'),
+      );
       return $form;
      
     case 'validate':
@@ -168,7 +174,7 @@ function office_hours_field_settings($op, $field) {
       break;
 
     case 'save':
-      return array('granularity', 'limit_start', 'limit_end', 'validate_hours');
+      return array('granularity', 'limit_start', 'limit_end', 'validate_hours', 'display_none_as_closed');
   }
 }
 
@@ -290,6 +296,7 @@ function office_hours_page_change_week_js($node, $field_name, $year, $week) {
  * per day, matching the current week or the one specified.
  */
 function _office_hours_resolve_week($element) {
+  $field = content_fields($element['#field_name'], $element['#type_name']);
   $node = $element['#node'];
   if (isset($node->display_week) && !empty($node->display_week)) {
     $week_year = $node->display_year;
@@ -337,12 +344,15 @@ function _office_hours_resolve_week($element) {
   }
 
   // Then sort the multiple values into days.
-  foreach ($pick as $delta => $row) {
-    foreach (_office_hours_day_names() as $day) {
+  foreach (_office_hours_day_names() as $day) {
+    foreach ($pick as $delta => $row) {
       if (!empty($row[$day . '_start'])) {
         $week[$day][$delta]['start'] = $row[$day . '_start'];
         $week[$day][$delta]['end'] = $row[$day . '_end'];
       }
+    }
+    if ($field['display_none_as_closed'] && !isset($week[$day])) {
+      $week[$day] = array();
     }
   }
   return $week;

@@ -15,7 +15,7 @@
 
   <?php
     foreach ($day_abbr as $num => $day) {
-      if (isset($week[$day]) && !empty($week[$day])) {
+      if (isset($week[$day])) {
         print theme('office_hours_format_day', $day_names[$num], $week[$day]);
       }
     }
