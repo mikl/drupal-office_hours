@@ -76,11 +76,14 @@ function theme_office_hours_select($element) {
  *    Start time.
  * @param string $end
  *    End time.
+ * @param integer $day_number
+ *    Day number.
  * @return string
  *    HTML-formatted closing hours for that day.
  */
-function theme_office_hours_format_day($name, $values) {
-  $output = '<div class="oh-display">' . $name;
+function theme_office_hours_format_day($name, $values, $day_number) {
+  $oddity = ($day_number % 2) ? 'odd' : 'even';
+  $output = '<div class="' . $oddity . '">' . $name;
   if (is_array($values) && !empty($values)) {
     foreach ($values as $val) {
       $output .= ' <span class="hours start">' . _office_hours_format_time($val['start']) . '</span>';
