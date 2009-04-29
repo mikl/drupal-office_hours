@@ -140,7 +140,7 @@ function office_hours_field_settings($op, $field) {
         '#type' => 'select',
         '#title' => t('Limit widget start hours'),
         '#options' => $option_hour_list,
-        '#default_value' => $field['limit_start']? $field['limit_start'] : FALSE, 
+        '#default_value' => $field['limit_start']? $field['limit_start'] : FALSE,
         '#required' => FALSE,
         '#description' => t('Set the allowed start hours.'),
       );
@@ -166,11 +166,11 @@ function office_hours_field_settings($op, $field) {
         '#description' => t('Display days where no opening hours are defined as “Closed”. If not checked, those days will not be listed.'),
       );
       return $form;
-     
+
     case 'validate':
       if ($field['limit_end'] <= $field['limit_start'] && !empty($field['limit_end']) && !empty($field['limit_start'])) {
         form_set_error('limit_end','Limit ending hours are earlier than start hours');
-      }        
+      }
       break;
 
     case 'save':
@@ -183,6 +183,16 @@ function office_hours_field_settings($op, $field) {
  */
 function office_hours_field($op, &$node, $field, &$items, $teaser, $page) {
   switch ($op) {
+    case 'load':
+      // The field is being loaded, determine its status and how long
+      // until it closes.
+      $additions = array();
+      $week = office_hours_resolve_week($node, $field);
+      $additions['seconds_to_closing'] = office_hours_opening_status($week);
+      $additions['status'] = ($additions['seconds_to_closing']) ? 'open' : 'closed';
+      $additions['week_data'] = array_shift($week);
+      $additions['week'] = $week;
+      return array($field['field_name'] . '_processed' => $additions);
     case 'presave':
       // Unpack the array of start and end time, so they'll get stored
       // in the database.
@@ -290,23 +300,44 @@ function office_hours_page_change_week_js($node, $field_name, $year, $week) {
 }
 
 /**
+ * API function to determine whether a node is considered open by
+ * looking at its office hours field(s).
+ *
+ * @param mixed $node
+ *    Node object or node id.
+ * @return boolean
+ *    Opening status - true for open.
+ */
+function office_hours_node_is_open($node) {
+  if ($node instanceof stdClass) {
+    $fields = array();
+  }
+  elseif (is_numeric($node) && $node > 0) {
+    $fields = array();
+  }
+  return FALSE;
+}
+
+/**
  * Helper function for week resolution.
  *
  * Resolves multiple values into a single value with one or more periods
  * per day, matching the current week or the one specified.
+ *
+ * @param object $node
+ *    The node we're getting data for.
+ * @param array $field
+ *    The office_hours field instance.
+ * @param string $week_spec
+ *    The week that we're looking for specified in ISO 8601 format.
+ *    Defaults to current week.
+ * @return array
+ *    An array with the first item being data about the week, and the
+ *    rest being the individual week days.
  */
-function _office_hours_resolve_week($element) {
-  $field = content_fields($element['#field_name'], $element['#type_name']);
-  $node = $element['#node'];
-  if (isset($node->display_week) && !empty($node->display_week)) {
-    $week_year = $node->display_year;
-    $week_num = $node->display_week;
-    $week_num_year = _office_hours_week_to_iso($week_year, $week_num);
-  }
-  else {
-    $week_num_year = _office_hours_week_to_iso();
-    list($week_year, $week_num) = _office_hours_week_from_iso($week_num_year);
-  }
+function office_hours_resolve_week($node, $field, $week_spec = NULL) {
+  $week_num_year = (!is_null($week_spec)) ? $week_spec : _office_hours_week_to_iso();
+  list($week_year, $week_num) = _office_hours_week_from_iso($week_num_year);
   $week_kind = ($week_num % 2) ? 'odd' : 'even';
   $values = array();
   $week = array('#data' => array(
@@ -318,10 +349,8 @@ function _office_hours_resolve_week($element) {
 
   // First, sort the values by specificity. Specific weeks, odd, even
   // and all into the
-  foreach ($element as $key => $row) {
-    if (strpos($key, '#') === FALSE && isset($row['#item']['scope'])) {
-      $values[$row['#item']['scope']][] = $row['#item'];
-    }
+  foreach ($node->$field['field_name'] as $delta => $item) {
+    $values[$item['scope']][] = $item;
   }
 
   // Pick the most specific one available that matches the selected week.
@@ -356,6 +385,32 @@ function _office_hours_resolve_week($element) {
     }
   }
   return $week;
+}
+
+/**
+ * Calcuate whether we're open.
+ *
+ * @param array $week
+ *    The week array with data as calculated by office_hours_resolve_week.
+ * @return integer
+ *    Number of seconds until closing time or 0 if closed.
+ */
+function office_hours_opening_status($week) {
+  // Finally, figure out whether we're open and if so, how long there
+  // is till closing time.
+  $day_name = strtolower(date('D', $_SERVER['REQUEST_TIME']));
+  $today = date('Y-m-d', $_SERVER['REQUEST_TIME']);
+  $status = FALSE;
+
+  foreach($week[$day_name] as $delta => $day) {
+    $now = $_SERVER['REQUEST_TIME'];
+    $start = strtotime($day_name . $day['start']);
+    $end = strtotime($day_name . $day['end']);
+    if ($now > $start && $now < $end) {
+      $status = $end - $now;
+    }
+  }
+  return $status;
 }
 
 /**
@@ -425,7 +480,7 @@ function _office_hours_week_to_iso($year=NULL, $week=NULL) {
   }
   return sprintf('%04uW%02u', $year, $week);
 }
-  
+
 /**
  * Parse ISO 8601 week specifier.
  *

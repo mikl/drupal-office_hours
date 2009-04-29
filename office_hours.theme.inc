@@ -10,25 +10,40 @@
  * Preprocess hook for default field formatter.
  */
 function office_hours_preprocess_office_hours_formatter_default(&$vars) {
-  $vars['week'] = _office_hours_resolve_week($vars['element']);
-  $vars['week_data'] = array_shift($vars['week']);
+  $element = $vars['element'];
+  $node = $element['#node'];
+  $vars['node'] = $node;
+
+  // If the node has a specific week set, get the week data for it.
+  if (isset($vars['element']['#node']->display_week)) {
+    $field = content_fields($element['#field_name'], $element['#type_name']);
+    $vars['week'] = office_hours_resolve_week($node, $field, $node->display_year . 'W' . $node->display_week);
+    $vars['week_data'] = array_shift($vars['week']);
+  }
+  // Otherwise, use the data that's attached to the node in hook_field.
+  else {
+    $name = $element['#field_name'] . '_processed';
+    $field_data = $node->$name;
+    $vars['week'] = $field_data['week'];
+    $vars['week_data'] = $field_data['week_data'];
+  }
+
+  // Calculate week view, and prepare the variables we need to render it.
   $days = _office_hours_week_days($vars['week_data']['year_and_number']);
   $vars['start_day'] = format_date($days['start'], 'custom', 'd/m');
   $vars['end_day'] = format_date($days['end'], 'custom', 'd/m');
   $vars['day_abbr'] = date_week_days_ordered(_office_hours_day_names());
   $vars['day_names'] = date_week_days_ordered(date_week_days(TRUE));
   $vars['week_num_text'] = t('Week @week_num', array('@week_num' => $vars['week_data']['number']));
-  $vars['node'] = $vars['element']['#node'];
 
   drupal_add_js(array('officeHours' => array($vars['node']->nid => array(
     'year' => $vars['week_data']['year'],
     'week' => $vars['week_data']['number'],
     'nid' => $vars['node']->nid,
     'callback' => url('office_hours/js/change_week'),
-    'field_name' => $vars['element']['#field_name'],
+    'field_name' => $element['#field_name'],
   ))), 'setting');
   drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.js');
-
   return $vars;
 }
 
