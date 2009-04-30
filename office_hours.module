@@ -402,12 +402,14 @@ function office_hours_opening_status($week) {
   $today = date('Y-m-d', $_SERVER['REQUEST_TIME']);
   $status = FALSE;
 
-  foreach($week[$day_name] as $delta => $day) {
-    $now = $_SERVER['REQUEST_TIME'];
-    $start = strtotime($day_name . $day['start']);
-    $end = strtotime($day_name . $day['end']);
-    if ($now > $start && $now < $end) {
-      $status = $end - $now;
+  if (is_array($week[$day_name]) && (!empty($week[$day_name]))) {
+    foreach($week[$day_name] as $delta => $day) {
+      $now = $_SERVER['REQUEST_TIME'];
+      $start = strtotime($day_name . $day['start']);
+      $end = strtotime($day_name . $day['end']);
+      if ($now > $start && $now < $end) {
+        $status = $end - $now;
+      }
     }
   }
   return $status;
