@@ -252,6 +252,7 @@ function office_hours_widget(&$form, &$form_state, $field, $items, $delta = 0) {
   $element = array(
     '#type' => $field['widget']['type'],
     '#default_value' => isset($items[$delta]) ? $items[$delta] : '',
+    '#field_settings' => content_fields($field['field_name'], $form['#node']->type),
   );
   return $element;
 }
