@@ -67,7 +67,7 @@ function office_hours_week_process($element, $edit, $form_state, $form) {
       '#size' => 4,
       '#maxlength' => 8,
       '#default_value' => $values[$day . '_open'],
-      '#attributes' => array('class' => 'open'),
+      '#attributes' => array('class' => 'open time'),
     );
 
     $element[$day]['close'] = array(
@@ -75,7 +75,7 @@ function office_hours_week_process($element, $edit, $form_state, $form) {
       '#size' => 4,
       '#maxlength' => 8,
       '#default_end' => $values[$day . '_close'],
-      '#attributes' => array('class' => 'close'),
+      '#attributes' => array('class' => 'close time'),
     );
   }
   return $element;
