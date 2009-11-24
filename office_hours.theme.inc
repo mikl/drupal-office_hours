@@ -43,7 +43,7 @@ function office_hours_preprocess_office_hours_formatter_default(&$vars) {
     'callback' => url('office_hours/js/change_week'),
     'field_name' => $element['#field_name'],
   ))), 'setting');
-  drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.js');
+  drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.display.js');
   return $vars;
 }
 
