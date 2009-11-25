@@ -100,7 +100,6 @@ function office_hours_field_settings($op, $field) {
         'type' => 'varchar',
         'length' => '10',
         'description' => t('Scope for this office hours record, one of "all", "odd", "even", "week" or "week_range".'),
-        'not null' => TRUE,
       );
 
       $columns['week_start'] = array(
@@ -424,17 +423,12 @@ function office_hours_opening_status($week) {
 /**
  * Format a time string like 19:00:00.
  */
-function _office_hours_format_time($time) {
-  $output = '';
+function office_hours_format_time($time) {
   list($hours, $minutes, $seconds) = explode(':', $time);
 
   if (is_numeric($hours) && $hours >= 0 && $hours < 24) {
-    $output = $hours;
-    if (is_numeric($minutes) && $minutes > 0 && $minutes < 60) {
-      $output .= '.' . $minutes;
-    }
+    return sprintf('%02u:%02u', $hours, $minutes);
   }
-  return $output;
 }
 
 /**

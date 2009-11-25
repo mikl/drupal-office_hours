@@ -66,7 +66,7 @@ function office_hours_week_process($element, $edit, $form_state, $form) {
       '#type' => 'textfield',
       '#size' => 4,
       '#maxlength' => 8,
-      '#default_value' => $values[$day . '_open'],
+      '#default_value' => office_hours_format_time($values[$day . '_open']),
       '#attributes' => array('class' => 'open time'),
     );
 
@@ -74,7 +74,7 @@ function office_hours_week_process($element, $edit, $form_state, $form) {
       '#type' => 'textfield',
       '#size' => 4,
       '#maxlength' => 8,
-      '#default_end' => $values[$day . '_close'],
+      '#default_value' => office_hours_format_time($values[$day . '_close']),
       '#attributes' => array('class' => 'close time'),
     );
   }
@@ -107,6 +107,5 @@ function office_hours_week_validate($element, &$form_state) {
 
   // Overwrite the values with our sanitised ones.
   form_set_value($element, $values, $form_state);
-  dpm($form_state);
 }
 
