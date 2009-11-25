@@ -51,12 +51,19 @@ function office_hours_init() {
 
 /**
  * Implementation of hook_content_is_empty().
+ *
+ * @return boolean
+ *    TRUE if field item is considered empty.
  */
 function office_hours_content_is_empty($item, $field) {
-  // Check if one of the days have a start hour. If not, we consider
-  // the field to be empty.
+  // First check, we don't want rules without a scope.
+  if (!isset($item['scope']) || empty($item['scope'])) {
+    return TRUE;
+  }
+
+  // Check if one of the days have a start hour.
   foreach (_office_hours_day_names() as $name) {
-    if (!empty($item[$name . '_start'])) {
+    if (!empty($item[$name . '_open'])) {
       return FALSE;
     }
   }
@@ -168,7 +175,7 @@ function office_hours_field($op, &$node, $field, &$items, $teaser, $page) {
       // in the database.
       foreach ($items as $delta => $week) {
         foreach($days as $day) {
-          if (isset($$items[$delta][$day])) {
+          if (isset($items[$delta][$day])) {
             $items[$delta][$day . '_open'] = sprintf('%02u:%02u', $items[$delta][$day]['open']['hours'], $items[$delta][$day]['open']['minutes']);
             $items[$delta][$day . '_close'] = sprintf('%02u:%02u', $items[$delta][$day]['close']['hours'], $items[$delta][$day]['close']['minutes']);
             unset($items[$delta][$day]);
