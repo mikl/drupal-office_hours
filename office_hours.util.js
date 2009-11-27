@@ -20,7 +20,7 @@ Drupal.officeHours = {
       // match[1] is hours, match[2] is minutes.
       // Prefix zero to single-digit hours. 
       if (match[1] < 10) {
-        newVal += '0' + match[1];
+        newVal += '0' + parseInt(match[1]);
       }
       else if (match[1] < 24) {
         newVal += match[1];
@@ -43,7 +43,7 @@ Drupal.officeHours = {
       if (match) {
         // Prefix zero to single-digit hours. 
         if (match[1] < 10) {
-          newVal += '0' + match[1];
+          newVal += '0' + parseInt(match[1]);
         }
         else if (match[1] < 24) {
           newVal += match[1];
