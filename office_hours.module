@@ -352,37 +352,29 @@ function office_hours_resolve_week($node, $field, $week_spec = NULL) {
     'kind' => $week_kind,
   ));
 
+  $pick = array();
+
   // First, sort the values by specificity. Specific weeks, odd, even
   // and all into the
   foreach ($node->$field['field_name'] as $delta => $item) {
-    $values[$item['scope']][] = $item;
-  }
-
-  // Pick the most specific one available that matches the selected week.
-  if (isset($values[$week_num_year])) {
-    $pick = $values[$week_num_year];
-    // Store what level of specificity was used in the week data.
-    $week['#data']['specificity'] = 'precise';
-  }
-  elseif (isset($values[$week_kind])) {
-    $pick = $values[$week_kind];
-    $week['#data']['specificity'] = 'even_odd';
-  }
-  elseif (isset($values['all'])) {
-    $pick = $values['all'];
-    $week['#data']['specificity'] = 'all';
-  }
-  else {
-    $pick = array();
-    $week['#data']['specificity'] = 'none';
+    if (($item['scope'] == 'week_range' && $item['week_start'] <= $week_num_year && $item['week_end'] >= $week_num_year) ||
+      ($item['scope'] == 'week' && $item['week_start'] == $week_num_year) ||
+      ($item['scope'] == $week_kind) || # For even/odd.
+      ($item['scope'] == 'all')) {
+      $pick[$delta] = $item;
+      $week['#rule']['scope'] = $item['scope'];
+      $week['#rule']['week_start'] = $item['week_start'];
+      $week['#rule']['week_end'] = $item['week_end'];
+      break;
+    }
   }
 
   // Then sort the multiple values into days.
   foreach (_office_hours_day_names() as $day) {
     foreach ($pick as $delta => $row) {
-      if (!empty($row[$day . '_start'])) {
-        $week[$day][$delta]['start'] = $row[$day . '_start'];
-        $week[$day][$delta]['end'] = $row[$day . '_end'];
+      if (!empty($row[$day . '_open'])) {
+        $week[$day][$delta]['start'] = $row[$day . '_open'];
+        $week[$day][$delta]['end'] = $row[$day . '_close'];
       }
     }
     if ($field['display_none_as_closed'] && !isset($week[$day])) {

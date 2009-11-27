@@ -96,8 +96,8 @@ function theme_office_hours_format_day($name, $values, $day_number) {
   $output = '<div class="' . $oddity . '">' . $name;
   if (is_array($values) && !empty($values)) {
     foreach ($values as $val) {
-      $output .= ' <span class="hours start">' . _office_hours_format_time($val['start']) . '</span>';
-      $output .= ' – <span class="hours end">' . _office_hours_format_time($val['end']) . '</span>';
+      $output .= ' <span class="hours start">' . office_hours_format_time($val['start']) . '</span>';
+      $output .= ' – <span class="hours end">' . office_hours_format_time($val['end']) . '</span>';
     }
   }
   else {
