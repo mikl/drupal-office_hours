@@ -267,6 +267,14 @@ function office_hours_page_get_week($nids, $field_name, $year, $week) {
   $week = preg_replace('/[^\d]/', '', $week);
 
   if (!empty($nids) && !empty($field_name)) {
+    if ($year < 2000 || $year > 3000) {
+      $year = format_date($_SERVER['REQUEST_TIME'], 'custom', 'Y');
+    }
+
+    if ($week < 1 || $week > 53) {
+      $week = format_date($_SERVER['REQUEST_TIME'], 'custom', 'W');
+    }
+
     foreach (explode(',', $nids) as $nid) {
       $node = node_load($nid);
 
