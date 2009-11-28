@@ -53,9 +53,11 @@ function office_hours_preprocess_office_hours_formatter_default(&$vars) {
 function theme_office_hours_week($element) {
   drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.util.js');
   drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.form.js');
+  drupal_add_css(drupal_get_path('module', 'office_hours') . '/office_hours.form.css');
   $header = array(t('Day'), t('Opening time'), t('Closing time'));
   $rows = array();
-  $element['#children'] = '';
+
+  $children = '';
 
   foreach ($element['#day_abbr'] as $key => $day) {
     // We need to re-render form elements, unset #printed attribute.
@@ -69,12 +71,17 @@ function theme_office_hours_week($element) {
     );
   }
 
-  unset($element['scope']['#printed']);
-  $element['#children'] .= drupal_render($element['scope']);
+  unset($element['scope']['#printed'], $element['week_start']['#printed'], $element['week_end']['#printed']);
 
-  $element['#children'] .= theme('table', $header, $rows, array('class' => 'office-hours-week'));
+  $children .= '<div class="office-hour-rule-select clear-block">';
+  $children .= drupal_render($element['scope']);
+  $children .= drupal_render($element['week_start']);
+  $children .= drupal_render($element['week_end']);
+  $children .= '</div>';
 
-  return $element['#children'];
+  $children .= theme('table', $header, $rows, array('class' => 'office-hours-week'));
+
+  return theme('form_element', $element, $children);
 }
 
 /**

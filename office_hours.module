@@ -306,7 +306,7 @@ function office_hours_node_is_open($node) {
  * @return array
  *    Array with hours/minutes values if successful, empty array if not.
  */
-function office_hours_parse_input($input) {
+function office_hours_parse_time_input($input) {
   $result = array();
   $matches = array();
 
@@ -321,6 +321,29 @@ function office_hours_parse_input($input) {
   }
 
   return $result;
+}
+
+/**
+ * Sanitise user week input.
+ *
+ * @param string $input
+ *    User text input.
+ * @return mixed
+ *    Week in "2009W42" format or NULL if not valid.
+ */
+function office_hours_sanitise_week_input($input) {
+  $matches = array();
+
+  // Strip spaces before trying to match.
+  $input = str_replace(' ', '', $input);
+
+  if (preg_match('/(\d{4})W?(\d{2})/', $input, $matches)) {
+    if ($matches[1] > 2000 && $matches[2] < 60) {
+      return sprintf('%04uW%02u', intval($matches[1]), intval($matches[2]));
+    }
+  }
+
+  return NULL;
 }
 
 /**

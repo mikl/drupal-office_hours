@@ -43,7 +43,6 @@ function office_hours_week_process($element, $edit, $form_state, $form) {
   $element['scope'] = array(
     '#type' => 'select',
     '#title' => t('Scope'),
-    '#description' => t('Select which weeks these hours apply to'),
     '#options' => array(
       'all' => t('Every week'),
       'odd' => t('Odd numbered weeks'),
@@ -52,6 +51,20 @@ function office_hours_week_process($element, $edit, $form_state, $form) {
       'week_range' => t('A range of weeks'),
     ),
     '#default_value' => $values['scope'],
+  );
+
+  $element['week_start'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Start week'),
+    '#default_value' => $values['week_start'],
+    '#attributes' => array('class' => 'week-start'),
+  );
+
+  $element['week_end'] = array(
+    '#type' => 'textfield',
+    '#title' => t('End week'),
+    '#default_value' => $values['week_end'],
+    '#attributes' => array('class' => 'week-end'),
   );
 
   foreach ($element['#day_abbr'] as $key => $day) {
@@ -89,8 +102,8 @@ function office_hours_week_validate($element, &$form_state) {
 
   foreach ($element['#day_abbr'] as $day) {
     if (!empty($values[$day]['open']) && !empty($values[$day]['close'])) {
-      $open = office_hours_parse_input($values[$day]['open']);
-      $close = office_hours_parse_input($values[$day]['close']);
+      $open = office_hours_parse_time_input($values[$day]['open']);
+      $close = office_hours_parse_time_input($values[$day]['close']);
 
       if (!empty($open) && !empty($close)) {
         $values[$day]['open'] = $open;
@@ -103,6 +116,34 @@ function office_hours_week_validate($element, &$form_state) {
     else {
       unset($values[$day]);
     }
+  }
+
+  // For week_ranges, we need both start and end.
+  if ($values['scope'] == 'week_range') {
+    $values['week_start'] = office_hours_sanitise_week_input($values['week_start']);
+    $values['week_end'] = office_hours_sanitise_week_input($values['week_end']);
+
+    if (empty($values['week_start'])) {
+      form_error($element['week_start'], t('You need to input a start week when selecting a week range.'));
+    }
+
+
+    if (empty($values['week_end'])) {
+      form_error($element['week_end'], t('You need to input a end week when selecting a week range.'));
+    }
+  }
+  // For a single week, we just need the start value.
+  elseif ($values['scope'] == 'week') {
+    $values['week_start'] = office_hours_sanitise_week_input($values['week_start']);
+    unset($values['week_end']);
+
+    if (empty($values['week_start'])) {
+      form_error($element['week_start'], t('You need to input a start week when defining a week range.'));
+    }
+  }
+  // For other scopes, remove the start and end values.
+  else {
+    unset($values['week_start'], $values['week_end']);
   }
 
   // Overwrite the values with our sanitised ones.

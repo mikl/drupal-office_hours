@@ -1,0 +1,11 @@
+/* $Id$ */
+
+/**
+ * CSS stylesheet for the office hours editing form.
+ */
+
+.office-hour-rule-select div.form-item {
+  float: left;
+  width: 33%
+}
+
