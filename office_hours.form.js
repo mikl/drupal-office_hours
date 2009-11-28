@@ -122,5 +122,26 @@ Drupal.behaviors.officeHoursForm = function () {
   // Trigger an initial change event to the the text field to the
   // correct state.
   }).change();
+
+  var $select = $(".tabledrag-processed .office-hour-rule-select");
+
+  // In case of multiple values, add a delete button to each rule.
+  $select.prepend('<a class="delete" href="#" title="' + Drupal.t('Delete') + '">×</a>');
+  $select.find('a.delete').click(function () {
+    // On click, fade the draggable container out before removing.
+    $(this).parents('tr.draggable').fadeOut('normal', function () {
+      // Empty all the time inputs, since that will cause the field to
+      // be considered empty by CCK, and be deleted.
+      $(this).find('input.time').val('');
+    });
+
+    // If not done already, mark the tableDrag as changed.
+    var td = Drupal.tableDrag[$select.parents('table.tabledrag-processed').attr('id')];
+    if (!td.changed) {
+      $(Drupal.theme('tableDragChangedWarning')).insertAfter(td.table).hide().fadeIn('slow');
+      td.changed = true;
+    }
+    return false;
+  });
 };
 

@@ -4,8 +4,28 @@
  * CSS stylesheet for the office hours editing form.
  */
 
-.office-hour-rule-select div.form-item {
+.office-hour-rule-select a.delete {
+  color: #333;
+  background-color: #eee;
+  border-radius: 5px;
+  float: right;
+  padding: 0px 5px 0px 5px;
+  z-index: 3;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+}
+
+.office-hour-rule-select a.delete:hover {
+  background-color: #fcc;
+  color: #900;
+}
+
+div div.office-hour-rule-select div.form-item {
   float: left;
-  width: 33%
+  padding-right: 1em;
+}
+
+.office-hour-rule-select input.form-text {
+  width: 5em;
 }
 
