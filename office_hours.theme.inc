@@ -43,6 +43,7 @@ function office_hours_preprocess_office_hours_formatter_default(&$vars) {
     'callback' => url('office_hours/get_week'),
     'field_name' => $element['#field_name'],
   ))), 'setting');
+  drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.js');
   drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.display.js');
   return $vars;
 }
@@ -51,7 +52,7 @@ function office_hours_preprocess_office_hours_formatter_default(&$vars) {
  * Theme function for the office hours week form element.
  */
 function theme_office_hours_week($element) {
-  drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.util.js');
+  drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.js');
   drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.form.js');
   drupal_add_css(drupal_get_path('module', 'office_hours') . '/office_hours.form.css');
   $header = array(t('Day'), t('Opening time'), t('Closing time'));
