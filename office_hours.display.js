@@ -42,11 +42,11 @@ Drupal.officeHours.changeWeek = function (nid, direction) {
   }
 
   $.getJSON(conf.callback + '/' + nid + '/' + conf.field_name + '/' + conf.year + '/' + week, {}, function (data, textStatus) {
-    Drupal.settings.officeHours[data.nid].week = parseInt(data.week);
-    Drupal.settings.officeHours[data.nid].year = parseInt(data.year);
+    Drupal.settings.officeHours[nid].week = parseInt(data.week);
+    Drupal.settings.officeHours[nid].year = parseInt(data.year);
 
     $('.office-hours-week.node-' + nid).slideUp('normal', function () {
-      $(this).replaceWith(data.html);
+      $(this).replaceWith(data.html[nid]);
       $('.office-hours-week.node-' + nid).hide().slideDown();
       Drupal.behaviors.officeHours();
     });

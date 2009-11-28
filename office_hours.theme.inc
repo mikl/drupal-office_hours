@@ -40,7 +40,7 @@ function office_hours_preprocess_office_hours_formatter_default(&$vars) {
     'year' => $vars['week_data']['year'],
     'week' => $vars['week_data']['number'],
     'nid' => $vars['node']->nid,
-    'callback' => url('office_hours/js/change_week'),
+    'callback' => url('office_hours/get_week'),
     'field_name' => $element['#field_name'],
   ))), 'setting');
   drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.display.js');

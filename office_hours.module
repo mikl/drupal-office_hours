@@ -11,10 +11,9 @@
  */
 function office_hours_menu() {
   $items = array();
-  $items['office_hours/js/change_week/%node/%/%/%'] = array(
+  $items['office_hours/get_week'] = array(
     'title' => 'Change week JavaScript callback',
-    'page callback' => 'office_hours_page_change_week_js',
-    'page arguments' => array(3, 4, 5, 6),
+    'page callback' => 'office_hours_page_get_week',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
@@ -251,32 +250,40 @@ function office_hours_views_api() {
  *
  * Returns the specified week for the specified field on the specified node.
  *
- * @param object $node
- *    The node object, loaded by the menu API.
+ * @param object $nids
+ *    Node IDs we wan't to get hours for.
  * @param string $field_name
  *    Name of our CCK field.
  * @param string $week
  *    ISO-8601 identifier for the week (ie. 2009W23).
  */
-function office_hours_page_change_week_js($node, $field_name, $year, $week) {
+function office_hours_page_get_week($nids, $field_name, $year, $week) {
   drupal_set_header('Content-Type: text/javascript; charset=utf-8');
   $output = array();
 
   // Sanitise our input.
   $field_name = preg_replace('/[^A-Za-z0-9_-]/', '', $field_name);
-  $week = preg_replace('/[^A-Za-z0-9_-]/', '', $week);
+  $year = preg_replace('/[^\d]/', '', $year);
+  $week = preg_replace('/[^\d]/', '', $week);
 
-  // Tack the week we want onto the node, so we have it available in the
-  // formatter without having to resort to global variables.
-  $node->display_year = $year;
-  $node->display_week = $week;
+  if (!empty($nids) && !empty($field_name)) {
+    foreach (explode(',', $nids) as $nid) {
+      $node = node_load($nid);
 
-  $output['html'] = content_format($field_name, $node->$field_name, 'default', $node);
+      // Tack the week we want onto the node, so we have it available in the
+      // formatter without having to resort to global variables.
+      $node->display_year = $year;
+      $node->display_week = $week;
+
+      if ($node) {
+        $output['html'][$nid] = content_format($field_name, $node->$field_name, 'default', $node);
+      }
+    }
+  }
+
   $output['year'] = $year;
   $output['week'] = $week;
-  $output['nid'] = $node->nid;
-  print drupal_to_js($output);
-  exit;
+  drupal_json($output);
 }
 
 /**
