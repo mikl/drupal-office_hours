@@ -101,7 +101,8 @@ function theme_office_hours_week($element) {
  */
 function theme_office_hours_format_day($name, $values, $day_number) {
   $oddity = ($day_number % 2) ? 'odd' : 'even';
-  $output = '<div class="' . $oddity . '">' . $name;
+  $output = '<div class="' . $oddity . '">';
+  $output .= '<span class="day">' . $name . '</span>';
   if (is_array($values) && !empty($values)) {
     foreach ($values as $val) {
       $output .= ' <span class="hours start">' . office_hours_format_time($val['start']) . '</span>';
