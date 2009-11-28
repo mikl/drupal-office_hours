@@ -375,6 +375,11 @@ function office_hours_resolve_week($node, $field, $week_spec = NULL) {
     'kind' => $week_kind,
   ));
 
+  // If we have no field data, just return the week data.
+  if (empty($node->$field['field_name'])) {
+    return $week;
+  }
+
   $pick = array();
 
   // First, sort the values by specificity. Specific weeks, odd, even
