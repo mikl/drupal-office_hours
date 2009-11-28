@@ -10,6 +10,10 @@ Drupal.behaviors.officeHoursForm = function () {
     Drupal.officeHours.sanitiseTimeInput(this);
   });
 
+  $('.office-hour-rule-select input.form-text').change(function () {
+    Drupal.officeHours.sanitiseWeekInput(this);
+  });
+
   $('.office-hour-rule-select select').change(function () {
     var $this = $(this);
     var $wrapper = $this.parents('.office-hour-rule-select');

@@ -9,7 +9,8 @@
 // Empty object for holding our functions.
 Drupal.officeHours = {
   timeMatcher: /(\d{1,2})[:.]?(\d{2})/,
-  hoursMatcher: /(\d{1,2})/,
+  twoDigitMatcher: /(\d{1,2})/,
+  yearWeekMatcher: /(\d{4})W?(\d{2})/,
   sanitiseTimeInput: function (elem) {
     var $this = $(elem);
     var newVal = ''; 
@@ -39,7 +40,7 @@ Drupal.officeHours = {
     }
     else {
       // Try matching just an hours value.
-      var match = $this.val().match(Drupal.officeHours.hoursMatcher);
+      var match = $this.val().match(Drupal.officeHours.twoDigitMatcher);
       if (match) {
         // Prefix zero to single-digit hours. 
         if (match[1] < 10) {
@@ -57,6 +58,37 @@ Drupal.officeHours = {
       }
     }
     
+    $this.val(newVal);
+  },
+  sanitiseWeekInput: function (elem) {
+    var $this = $(elem);
+    var newVal = '';
+
+    var match = $this.val().match(Drupal.officeHours.yearWeekMatcher);
+    if (match) {
+      newVal += parseInt(match[1]);
+      newVal += 'W';
+
+      // Prefix zero to single-digit weeks.
+      if (match[2] < 10) {
+        newVal += '0' + parseInt(match[2]);
+      }
+      else if (match[2] < 54) {
+        newVal += match[2];
+      }
+      else {
+        newVal += '01';
+      }
+    }
+    else {
+      // If we couldn't match a full value, try finding a week number.
+      var match = $this.val().match(Drupal.officeHours.twoDigitMatcher);
+      if (match && match[1] < 54) {
+        var year = new Date().getFullYear();
+        newVal += year + 'W' + match[1];
+      }
+    }
+
     $this.val(newVal);
   }
 };

@@ -127,9 +127,12 @@ function office_hours_week_validate($element, &$form_state) {
       form_error($element['week_start'], t('You need to input a start week when selecting a week range.'));
     }
 
-
     if (empty($values['week_end'])) {
       form_error($element['week_end'], t('You need to input a end week when selecting a week range.'));
+    }
+
+    if ($values['week_end'] <= $values['week_start']) {
+      form_error($element['week_end'], t('You need to input a end week later than the start week.'));
     }
   }
   // For a single week, we just need the start value.

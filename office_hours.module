@@ -338,7 +338,7 @@ function office_hours_sanitise_week_input($input) {
   $input = str_replace(' ', '', $input);
 
   if (preg_match('/(\d{4})W?(\d{2})/', $input, $matches)) {
-    if ($matches[1] > 2000 && $matches[2] < 60) {
+    if ($matches[1] > 2000 && $matches[2] < 54) {
       return sprintf('%04uW%02u', intval($matches[1]), intval($matches[2]));
     }
   }
