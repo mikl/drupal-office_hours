@@ -35,7 +35,7 @@ function office_hours_theme() {
       'file' => 'office_hours.theme.inc',
     ),
     'office_hours_format_day' => array(
-      'arguments' => array('name' => NULL, 'start' => NULL, 'end' => NULL),
+      'arguments' => array('name' => NULL, 'open' => NULL, 'close' => NULL),
       'file' => 'office_hours.theme.inc',
     ),
   );
@@ -60,7 +60,7 @@ function office_hours_content_is_empty($item, $field) {
     return TRUE;
   }
 
-  // Check if one of the days have a start hour.
+  // Check if one of the days have a open hour.
   foreach (_office_hours_day_names() as $name) {
     if (!empty($item[$name . '_open'])) {
       return FALSE;
@@ -169,7 +169,7 @@ function office_hours_field($op, &$node, $field, &$items, $teaser, $page) {
       return array($field['field_name'] . '_processed' => $additions);
     case 'presave':
       $days = _office_hours_day_names();
-      // Unpack the array of start and end time, so they'll get stored
+      // Unpack the array of open and close time, so they'll get stored
       // in the database.
       foreach ($items as $delta => $week) {
         foreach($days as $day) {
@@ -416,8 +416,8 @@ function office_hours_resolve_week($node, $field, $week_spec = NULL) {
   foreach (_office_hours_day_names() as $day) {
     foreach ($pick as $delta => $row) {
       if (!empty($row[$day . '_open'])) {
-        $week[$day][$delta]['start'] = $row[$day . '_open'];
-        $week[$day][$delta]['end'] = $row[$day . '_close'];
+        $week[$day][$delta]['open'] = $row[$day . '_open'];
+        $week[$day][$delta]['close'] = $row[$day . '_close'];
       }
     }
     if ($field['display_none_as_closed'] && !isset($week[$day])) {
@@ -445,10 +445,10 @@ function office_hours_opening_status($week) {
   if (is_array($week[$day_name]) && (!empty($week[$day_name]))) {
     foreach($week[$day_name] as $delta => $day) {
       $now = $_SERVER['REQUEST_TIME'];
-      $start = strtotime($day_name . $day['start']);
-      $end = strtotime($day_name . $day['end']);
-      if ($now > $start && $now < $end) {
-        $status = $end - $now;
+      $open = strtotime($day_name . $day['open']);
+      $close = strtotime($day_name . $day['close']);
+      if ($now > $open && $now < $close) {
+        $status = $close - $now;
       }
     }
   }

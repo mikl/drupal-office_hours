@@ -90,10 +90,10 @@ function theme_office_hours_week($element) {
  *
  * @param string $name
  *    The name of the day.
- * @param string $start
- *    Start time.
- * @param string $end
- *    End time.
+ * @param string $open
+ *    Open time.
+ * @param string $close
+ *    Close time.
  * @param integer $day_number
  *    Day number.
  * @return string
@@ -105,8 +105,8 @@ function theme_office_hours_format_day($name, $values, $day_number) {
   $output .= '<span class="day">' . $name . '</span>';
   if (is_array($values) && !empty($values)) {
     foreach ($values as $val) {
-      $output .= ' <span class="hours start">' . office_hours_format_time($val['start']) . '</span>';
-      $output .= ' – <span class="hours end">' . office_hours_format_time($val['end']) . '</span>';
+      $output .= ' <span class="hours start">' . office_hours_format_time($val['open']) . '</span>';
+      $output .= ' – <span class="hours end">' . office_hours_format_time($val['close']) . '</span>';
     }
   }
   else {
