@@ -160,16 +160,9 @@ function office_hours_field_settings($op, $field) {
  */
 function office_hours_field($op, &$node, $field, &$items, $teaser, $page) {
   switch ($op) {
-    case 'load':
+    case 'sanitize':
       // Attach office hours data to node.
-      $additions = array();
-      $week = office_hours_resolve_week($node, $field);
-      $additions['seconds_to_closing'] = office_hours_opening_status($week);
-      $additions['status'] = ($additions['seconds_to_closing']) ? 'open' : 'closed';
-      $additions['status_local'] = ($additions['seconds_to_closing']) ? t('open') : t('closed');
-      $additions['week_data'] = array_shift($week);
-      $additions['week'] = $week;
-      return array($field['field_name'] . '_processed' => $additions);
+      $node->{$field['field_name'] . '_processed'} = office_hours_process_data($field, $items);
     case 'presave':
       $days = _office_hours_day_names();
       // Unpack the array of open and close time, so they'll get stored
@@ -260,7 +253,7 @@ function office_hours_views_api() {
  * @param string $week
  *    ISO-8601 identifier for the week (ie. 2009W23).
  */
-function office_hours_page_get_week($nids, $field_name, $year, $week) {
+function office_hours_page_get_week($nids, $field_name, $year = NULL, $week = NULL) {
   $output = array();
 
   $nid_array = array_filter(explode(',', $nids), 'is_numeric');
@@ -275,8 +268,12 @@ function office_hours_page_get_week($nids, $field_name, $year, $week) {
     $year = format_date($_SERVER['REQUEST_TIME'], 'custom', 'Y');
   }
 
-  if ($week < 1 || $week > 53) {
+  if ($week < 1) {
     $week = format_date($_SERVER['REQUEST_TIME'], 'custom', 'W');
+  }
+  elseif ($week > 53) {
+    $week = 1;
+    $year++;
   }
 
   $output['year'] = $year;
@@ -294,20 +291,24 @@ function office_hours_page_get_week($nids, $field_name, $year, $week) {
       return;
     }
 
+    $field = content_fields($field_name);
+    $items = office_hours_load_data($nid_array, $field);
+
     foreach ($nid_array as $nid) {
-      $node = node_load($nid, NULL, TRUE);
+      $output['data'][$nid] = office_hours_process_data($field, $items[$nid], $year . 'W' . $week);
 
-      // Tack the week we want onto the node, so we have it available in the
-      // formatter without having to resort to global variables.
-      $node->display_year = $year;
-      $node->display_week = $week;
+      // Only render HTML for a single node.
+      if (count($nid_array) == 1) {
+        // Create mock node and element for rendering our field.
+        $node = new stdClass;
+        $node->nid = $nid;
+        $node->{$field_name . '_processed'} = $output['data'][$nid];
+        $element = array(
+          '#field_name' => $field_name,
+          '#node' => $node,
+        );
 
-      if ($node) {
-        // Only render HTML for a single node.
-        if (count($nid_array) == 1) {
-          $output['html'][$nid] = content_format($field_name, $node->$field_name, 'default', $node);
-        }
-        $output['data'][$nid] = $node->{$field_name . '_processed'};
+        $output['html'][$nid] = theme('office_hours_formatter_default', $element);
       }
     }
 
@@ -328,22 +329,89 @@ function office_hours_page_get_week($nids, $field_name, $year, $week) {
 }
 
 /**
- * API function to determine whether a node is considered open by
- * looking at its office hours field(s).
+ * Data loading function for office hours.
  *
- * @param mixed $node
- *    Node object or node id.
- * @return boolean
- *    Opening status - true for open.
+ * While we can use CCK's API to handle this for us, the objective here
+ * is to get all our data with a single query, since it is used heavily
+ * in non-cacheable contexts.
+ *
+ * @param mixed $nids
+ *    Either a single node ID or an array for multiple nodes.
+ * @param array $field
+ *    The office_hours field instance.
+ * @return array
+ *    The loaded data, keyed by node id and delta.
  */
-function office_hours_node_is_open($node) {
-  if ($node instanceof stdClass) {
-    $fields = array();
+function office_hours_load_data($nids, $field) {
+  // Build SQL where statement. Take extra care with $nids, since it
+  // contains raw request data.
+  if (is_numeric($nids)) {
+    $where = 'WHERE nid = ' . intval($nids) . ' ';
   }
-  elseif (is_numeric($node) && $node > 0) {
-    $fields = array();
+  elseif (is_array($nids)) {
+    $nids = array_filter($nids, 'is_numeric');
+    if (!empty($nids)) {
+      $where = 'WHERE nid IN (' . implode(',', $nids) . ') ';
+    }
+    else {
+      return array();
+    }
   }
-  return FALSE;
+  else {
+    return array();
+  }
+
+  $dbinfo = content_database_info($field);
+
+  // Start building our query.
+  $col_names = array('nid');
+
+  // For multiple values, we need the delta value.
+  if ($field['multiple']) {
+    $col_names[] = 'delta';
+  }
+
+  // Add each of our columns aliased so the return data will be uniform.
+  foreach ($dbinfo['columns'] as $name => $attributes) {
+    $col_names[] = $attributes['column'] . ' AS ' . $name;
+  }
+  $sql = 'SELECT ' . implode(', ', $col_names);
+  $sql .= ' FROM ' . $dbinfo['table'] . ' ' . $where;
+
+  $query = db_query($sql);
+
+  $data = array();
+  while ($row = db_fetch_array($query)) {
+    $delta = (isset($row['delta'])) ? $row['delta'] : 0;
+    $data[$row['nid']][$delta] = $row;
+  }
+
+  return $data;
+}
+
+/**
+ * Process the office hours data for a single node.
+ *
+ * @param array $field
+ *    The office_hours field instance.
+ * @param array $items
+ *    The office hour items for this node.
+ * @param string $week_spec
+ *    The week that we're looking for specified in ISO 8601 format.
+ *    Defaults to current week.
+ * @return array
+ *    Processed data.
+ */
+function office_hours_process_data($field, $items, $week_spec = NULL) {
+  $data = array();
+
+  $data['week'] = office_hours_resolve_week($field, $items, $week_spec);
+  $data['seconds_to_closing'] = office_hours_opening_status($data['week']);
+  $data['status'] = ($data['seconds_to_closing']) ? 'open' : 'closed';
+  $data['status_local'] = ($data['seconds_to_closing']) ? t('open') : t('closed');
+  $data['week_data'] = array_shift($data['week']);
+
+  return $data;
 }
 
 /**
@@ -400,10 +468,10 @@ function office_hours_sanitise_week_input($input) {
  * Resolves multiple values into a single value with one or more periods
  * per day, matching the current week or the one specified.
  *
- * @param object $node
- *    The node we're getting data for.
  * @param array $field
  *    The office_hours field instance.
+ * @param array $items
+ *    The office_hours field instance values.
  * @param string $week_spec
  *    The week that we're looking for specified in ISO 8601 format.
  *    Defaults to current week.
@@ -411,7 +479,7 @@ function office_hours_sanitise_week_input($input) {
  *    An array with the first item being data about the week, and the
  *    rest being the individual week days.
  */
-function office_hours_resolve_week($node, $field, $week_spec = NULL) {
+function office_hours_resolve_week($field, $items, $week_spec = NULL) {
   $week_num_year = (!is_null($week_spec)) ? $week_spec : _office_hours_week_to_iso();
   list($week_year, $week_num) = _office_hours_week_from_iso($week_num_year);
   $week_kind = ($week_num % 2) ? 'odd' : 'even';
@@ -424,7 +492,7 @@ function office_hours_resolve_week($node, $field, $week_spec = NULL) {
   ));
 
   // If we have no field data, just return the week data.
-  if (empty($node->$field['field_name'])) {
+  if (empty($items)) {
     return $week;
   }
 
@@ -432,7 +500,7 @@ function office_hours_resolve_week($node, $field, $week_spec = NULL) {
 
   // Find the matching rule, starting from the highest delta value – so
   // that the last added rule should be the most specific.
-  foreach (array_reverse($node->$field['field_name'], TRUE) as $delta => $item) {
+  foreach (array_reverse($items, TRUE) as $delta => $item) {
     if (($item['scope'] == 'week_range' && $item['week_start'] <= $week_num_year && $item['week_end'] >= $week_num_year) ||
       ($item['scope'] == 'week' && $item['week_start'] == $week_num_year) ||
       ($item['scope'] == $week_kind) || # For even/odd.
