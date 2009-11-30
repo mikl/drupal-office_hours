@@ -260,25 +260,41 @@ function office_hours_views_api() {
  *    ISO-8601 identifier for the week (ie. 2009W23).
  */
 function office_hours_page_get_week($nids, $field_name, $year, $week) {
-  drupal_set_header('Content-Type: text/javascript; charset=utf-8');
   $output = array();
+
+  $nid_array = array_filter(explode(',', $nids), 'is_numeric');
+  sort($nid_array, SORT_NUMERIC);
 
   // Sanitise our input.
   $field_name = preg_replace('/[^A-Za-z0-9_-]/', '', $field_name);
   $year = preg_replace('/[^\d]/', '', $year);
   $week = preg_replace('/[^\d]/', '', $week);
 
+  if ($year < 2000 || $year > 3000) {
+    $year = format_date($_SERVER['REQUEST_TIME'], 'custom', 'Y');
+  }
+
+  if ($week < 1 || $week > 53) {
+    $week = format_date($_SERVER['REQUEST_TIME'], 'custom', 'W');
+  }
+
+  $output['year'] = $year;
+  $output['week'] = $week;
+
   if (!empty($nids) && !empty($field_name)) {
-    if ($year < 2000 || $year > 3000) {
-      $year = format_date($_SERVER['REQUEST_TIME'], 'custom', 'Y');
+    $cache_key = implode(':', array(
+      'office_hours', 'get_week', implode(',', $nid_array),
+      $field_name, $year, $week,
+    ));
+
+    // If available, serve cached data.
+    if ($cache = cache_get($cache_key) && $cache->expire > $_SERVER['REQUEST_TIME']) {
+      drupal_json($cache->data);
+      return;
     }
 
-    if ($week < 1 || $week > 53) {
-      $week = format_date($_SERVER['REQUEST_TIME'], 'custom', 'W');
-    }
-
-    foreach (explode(',', $nids) as $nid) {
-      $node = node_load($nid);
+    foreach ($nid_array as $nid) {
+      $node = node_load($nid, NULL, TRUE);
 
       // Tack the week we want onto the node, so we have it available in the
       // formatter without having to resort to global variables.
@@ -286,13 +302,27 @@ function office_hours_page_get_week($nids, $field_name, $year, $week) {
       $node->display_week = $week;
 
       if ($node) {
-        $output['html'][$nid] = content_format($field_name, $node->$field_name, 'default', $node);
+        // Only render HTML for a single node.
+        if (count($nid_array) == 1) {
+          $output['html'][$nid] = content_format($field_name, $node->$field_name, 'default', $node);
+        }
+        $output['data'][$nid] = $node->{$field_name . '_processed'};
       }
     }
+
+    // Cache expires next quarter hour.
+    $minutes = ceil((date('i') + 1) / 15) * 15;
+
+    if ($minutes == 60) {
+      $expiry = strtotime(date('Y-m-d\T') . (date('H') + 1)  . ':00');
+    }
+    else {
+      $expiry = strtotime(date('Y-m-d\TH') . ':' . $minutes);
+    }
+
+    cache_set($cache_key, $output, 'cache', $expiry);
   }
 
-  $output['year'] = $year;
-  $output['week'] = $week;
   drupal_json($output);
 }
 
