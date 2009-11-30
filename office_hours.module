@@ -399,17 +399,17 @@ function office_hours_resolve_week($node, $field, $week_spec = NULL) {
 
   $pick = array();
 
-  // First, sort the values by specificity. Specific weeks, odd, even
-  // and all into the
-  foreach ($node->$field['field_name'] as $delta => $item) {
+  // Find the matching rule, starting from the highest delta value – so
+  // that the last added rule should be the most specific.
+  foreach (array_reverse($node->$field['field_name'], TRUE) as $delta => $item) {
     if (($item['scope'] == 'week_range' && $item['week_start'] <= $week_num_year && $item['week_end'] >= $week_num_year) ||
       ($item['scope'] == 'week' && $item['week_start'] == $week_num_year) ||
       ($item['scope'] == $week_kind) || # For even/odd.
       ($item['scope'] == 'all')) {
-      $pick[$delta] = $item;
       $week['#rule']['scope'] = $item['scope'];
       $week['#rule']['week_start'] = $item['week_start'];
       $week['#rule']['week_end'] = $item['week_end'];
+      $pick[$delta] = $item;
       break;
     }
   }
