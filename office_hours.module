@@ -166,6 +166,7 @@ function office_hours_field($op, &$node, $field, &$items, $teaser, $page) {
       $week = office_hours_resolve_week($node, $field);
       $additions['seconds_to_closing'] = office_hours_opening_status($week);
       $additions['status'] = ($additions['seconds_to_closing']) ? 'open' : 'closed';
+      $additions['status_local'] = ($additions['seconds_to_closing']) ? t('open') : t('closed');
       $additions['week_data'] = array_shift($week);
       $additions['week'] = $week;
       return array($field['field_name'] . '_processed' => $additions);
