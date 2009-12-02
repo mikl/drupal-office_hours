@@ -16,8 +16,8 @@ Drupal.behaviors.officeHours = function () {
     if (match && match[1] > 0) {
       $this.addClass('oh-processed')
         .find('.week-info')
-          .prepend('<a class="prev" href="#">&#9664;</a>')
-          .append('<a class="next" href="#">&#9654;</a>')
+          .prepend('<a class="prev" href="#">&larr;</a>')
+          .append('<a class="next" href="#">&rarr;</a>')
         .end()
         .find('a.prev')
           .click(function () {return Drupal.officeHours.changeWeek(match[1], 'prev');})
