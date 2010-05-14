@@ -41,13 +41,6 @@ function office_hours_theme() {
 }
 
 /**
- * Implementation of hook_init().
- */
-function office_hours_init() {
-    drupal_add_css(drupal_get_path('module', 'office_hours') .'/office_hours.css');
-}
-
-/**
  * Implementation of hook_content_is_empty().
  *
  * @return boolean
@@ -244,6 +237,7 @@ function office_hours_views_api() {
  * Page callback to change week via JavaScript.
  *
  * Returns the specified week for the specified field on the specified node.
+ * Just a simple wrapper for office_hours_bulk_load().
  *
  * @param object $nids
  *    Node IDs we wan't to get hours for.
@@ -253,7 +247,23 @@ function office_hours_views_api() {
  *    ISO-8601 identifier for the week (ie. 2009W23).
  */
 function office_hours_page_get_week($nids, $field_name, $year = NULL, $week = NULL) {
-  $output = array();
+  drupal_json(office_hours_bulk_load($nids, $field_name, $year, $week));
+}
+
+/**
+ * Helper function to load office hours data for several nodes.
+ *
+ * @param object $nids
+ *    Node IDs we wan't to get hours for.
+ * @param string $field_name
+ *    Name of our CCK field.
+ * @param string $week
+ *    ISO-8601 identifier for the week (ie. 2009W23).
+ * @return array
+ *    Office hours data, keyed by node id.
+ */
+function office_hours_bulk_load($nids, $field_name, $year = NULL, $week = NULL) {
+  $data = array();
 
   $nid_array = array_filter(explode(',', $nids), 'is_numeric');
   sort($nid_array, SORT_NUMERIC);
@@ -275,8 +285,8 @@ function office_hours_page_get_week($nids, $field_name, $year = NULL, $week = NU
     $year++;
   }
 
-  $output['year'] = $year;
-  $output['week'] = $week;
+  $data['year'] = (integer) $year;
+  $data['week'] = (integer) $week;
 
   if (!empty($nids) && !empty($field_name)) {
     $cache_key = implode(':', array(
@@ -286,28 +296,29 @@ function office_hours_page_get_week($nids, $field_name, $year = NULL, $week = NU
 
     // If available, serve cached data.
     if ($cache = cache_get($cache_key) && $cache->expire > $_SERVER['REQUEST_TIME']) {
-      drupal_json($cache->data);
-      return;
+      return $cache->data;
     }
 
     $field = content_fields($field_name);
     $items = office_hours_load_data($nid_array, $field);
 
     foreach ($nid_array as $nid) {
-      $output['data'][$nid] = office_hours_process_data($field, $items[$nid], $year . 'W' . $week);
+      // Correctly format week spec for our helper functions.
+      $week_spec = sprintf('%04uW%02u', $data['year'], $data['week']);
+      $data['data'][$nid] = office_hours_process_data($field, $items[$nid], $week_spec);
 
       // Only render HTML for a single node.
       if (count($nid_array) == 1) {
         // Create mock node and element for rendering our field.
         $node = new stdClass;
         $node->nid = $nid;
-        $node->{$field_name . '_processed'} = $output['data'][$nid];
+        $node->{$field_name . '_processed'} = $data['data'][$nid];
         $element = array(
           '#field_name' => $field_name,
           '#node' => $node,
         );
 
-        $output['html'][$nid] = theme('office_hours_formatter_default', $element);
+        $data['html'][$nid] = theme('office_hours_formatter_default', $element);
       }
     }
 
@@ -321,10 +332,9 @@ function office_hours_page_get_week($nids, $field_name, $year = NULL, $week = NU
       $expiry = strtotime(date('Y-m-d\TH') . ':' . $minutes);
     }
 
-    cache_set($cache_key, $output, 'cache', $expiry);
+    cache_set($cache_key, $data, 'cache', $expiry);
   }
-
-  drupal_json($output);
+  return $data;
 }
 
 /**
@@ -484,8 +494,8 @@ function office_hours_resolve_week($field, $items, $week_spec = NULL) {
   $week_kind = ($week_num % 2) ? 'odd' : 'even';
   $values = array();
   $week = array('#data' => array(
-    'number' => $week_num,
-    'year' => $week_year,
+    'number' => (integer) $week_num,
+    'year' => (integer) $week_year,
     'year_and_number' => $week_num_year,
     'kind' => $week_kind,
   ));
@@ -651,7 +661,7 @@ function office_hours_preprocess_office_hours_formatter_default(&$vars) {
   $vars['day_names'] = date_week_days_ordered(date_week_days(TRUE));
   $vars['week_num_text'] = t('Week @week_num', array('@week_num' => $vars['week_data']['number']));
 
-  drupal_add_js(array('officeHours' => array($vars['node']->nid => array(
+  drupal_add_js(array('officeHours' => array('node' . $vars['node']->nid => array(
     'year' => $vars['week_data']['year'],
     'week' => $vars['week_data']['number'],
     'nid' => $vars['node']->nid,
