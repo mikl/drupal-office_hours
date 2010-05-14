@@ -33,7 +33,7 @@ function office_hours_update_6000() {
   $ret = array();
   
   drupal_load('module', 'content');
-  $result = db_query("SELECT * FROM {". content_instance_tablename() ."} WHERE widget_type = 'office_hours'");
+  $result = db_query("SELECT * FROM {". content_instance_tablename() ."} WHERE widget_module = 'office_hours'");
   while ($field_instance = db_fetch_object($result)) {
 		$name = $field_instance->field_name;
   	$old = db_query("SELECT * FROM {content_".$name."}"); 
