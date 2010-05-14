@@ -11,8 +11,9 @@
  */
 Drupal.behaviors.officeHours = function () {
   $(".office-hours-week:not(.oh-processed)").each(function () {
-    var $this = $(this);
-    var match = $this.attr('class').match(Drupal.officeHours.nidMatcher);
+    var $this, match;
+    $this = $(this);
+    match = $this.attr('class').match(Drupal.officeHours.nidMatcher);
     if (match && match[1] > 0) {
       $this.addClass('oh-processed')
         .find('.week-info')
@@ -35,17 +36,18 @@ Drupal.behaviors.officeHours = function () {
  * Calls Drupal's JSON callback to get the new data.
  */
 Drupal.officeHours.changeWeek = function (nid, direction) {
-  var conf = Drupal.settings.officeHours[nid];
+  var conf, week;
+  conf = Drupal.settings.officeHours['node' + nid];
   if (direction == 'prev') {
-    var week = parseInt(conf.week) - 1;
+    week = parseInt(conf.week, 10) - 1;
   }
   else {
-    var week = parseInt(conf.week) + 1;
+    week = parseInt(conf.week, 10) + 1;
   }
 
   $.getJSON(conf.callback + '/' + nid + '/' + conf.field_name + '/' + conf.year + '/' + week, {}, function (data, textStatus) {
-    Drupal.settings.officeHours[nid].week = parseInt(data.week);
-    Drupal.settings.officeHours[nid].year = parseInt(data.year);
+    conf.week = parseInt(data.week, 10);
+    conf.year = parseInt(data.year, 10);
 
     $('.office-hours-week.node-' + nid).slideUp('fast', function () {
       $(this).replaceWith(data.html[nid]);

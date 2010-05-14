@@ -7,8 +7,8 @@
 
 // Object for holding our functions.
 Drupal.officeHours = {
-  timeMatcher: /(\d{1,2})[:.]?(\d{2})/,
-  twoDigitMatcher: /(\d{1,2})/,
+  timeMatcher: /([12]?\d)[:.]?(\d{2})/,
+  twoDigitMatcher: /([12]\d|[1-9])/,
   yearWeekMatcher: /(\d{4})W?(\d{2})/,
   nidMatcher: /node-(\d+)/
 };
