@@ -59,17 +59,20 @@ function theme_office_hours_week($element) {
  */
 function theme_office_hours_format_day($name, $values, $day_number) {
   $oddity = ($day_number % 2) ? 'odd' : 'even';
-  $output = '<div class="' . $oddity . '">';
-  $output .= '<span class="day">' . $name . '</span>';
+  $output = array('<div class="' . $oddity . ' clear-block">');
+  $output[] = '<span class="day">' . $name . '</span>';
   if (is_array($values) && !empty($values)) {
     foreach ($values as $val) {
-      $output .= ' <span class="hours start">' . office_hours_format_time($val['open']) . '</span>';
-      $output .= ' – <span class="hours end">' . office_hours_format_time($val['close']) . '</span>';
+      $output[] = '<span class="hours">';
+      $output[] = ' <span class="start">' . office_hours_format_time($val['open']) . '</span>';
+      $output[] = ' – <span class="end">' . office_hours_format_time($val['close']) . '</span>';
+      $output[] = '</span>';
     }
   }
   else {
-    $output .= ' <span class="closed">' . t('closed') . '</span>';
+    $output[] = ' <span class="hours closed">' . t('closed') . '</span>';
   }
-  return $output . '</div>';
+  $output[] = '</div>';
+  return join("\n", $output);
 }
 
