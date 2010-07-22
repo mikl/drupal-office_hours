@@ -174,6 +174,7 @@ function office_hours_field($op, &$node, $field, &$items, $teaser, $page) {
 
 /**
  * Implementation of hook_field_formatter_info().
+ *
  * Declare information about a formatter.
  */
 function office_hours_field_formatter_info() {
@@ -507,9 +508,15 @@ function office_hours_resolve_week($field, $items, $week_spec = NULL) {
 
   $pick = array();
 
-  // Find the matching rule, starting from the highest delta value – so
-  // that the last added rule should be the most specific.
   foreach (array_reverse($items, TRUE) as $delta => $item) {
+    // If a rule has been selected of a different scope, stop looking.
+    // This means that more than one rule of the same scope can apply at
+    // any given time.
+    if (isset($week['#rule']['scope']) && $week['#rule']['scope'] != $item['scope']) {
+      break;
+    }
+
+    // Check if the rule matches.
     if (($item['scope'] == 'week_range' && $item['week_start'] <= $week_num_year && $item['week_end'] >= $week_num_year) ||
       ($item['scope'] == 'week' && $item['week_start'] == $week_num_year) ||
       ($item['scope'] == $week_kind) || # For even/odd.
@@ -518,7 +525,6 @@ function office_hours_resolve_week($field, $items, $week_spec = NULL) {
       $week['#rule']['week_start'] = $item['week_start'];
       $week['#rule']['week_end'] = $item['week_end'];
       $pick[$delta] = $item;
-      break;
     }
   }
 
@@ -530,11 +536,28 @@ function office_hours_resolve_week($field, $items, $week_spec = NULL) {
         $week[$day][$delta]['close'] = $row[$day . '_close'];
       }
     }
-    if ($field['display_none_as_closed'] && !isset($week[$day])) {
+
+    // If there were any rules available for the day, sort them by start
+    // time, so they’ll appear in the logical order.
+    if (isset($week[$day])) {
+      usort($week[$day], '_office_hours_day_rule_sort');
+    }
+    elseif ($field['display_none_as_closed']) {
       $week[$day] = array();
     }
   }
+
   return $week;
+}
+
+/**
+ * Sorting callback for office hours rules for a day.
+ */
+function _office_hours_day_rule_sort($a, $b) {
+  if ($a['open'] == $b['open']) {
+    return 0;
+  }
+  return ($a['open'] < $b['open']) ? -1 : 1;
 }
 
 /**
