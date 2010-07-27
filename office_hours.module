@@ -25,9 +25,13 @@ function office_hours_menu() {
  */
 function office_hours_theme() {
   return array(
-    'office_hours_formatter_default' => array (
+    'office_hours_formatter_default' => array(
       'arguments' => array('element' => NULL),
       'template' => 'office_hours_formatter_default',
+    ),
+    'office_hours_formatter_daily' => array(
+      'arguments' => array('element' => NULL),
+      'template' => 'office_hours_formatter_daily',
     ),
     'office_hours_week' => array(
     	'arguments' => array('element' => NULL),
@@ -181,6 +185,11 @@ function office_hours_field_formatter_info() {
   return array(
     'default' => array(
       'label' => t('Week overview'),
+      'field types' => array('office_hours'),
+      'multiple values' => CONTENT_HANDLE_MODULE,
+    ),
+    'daily' => array(
+      'label' => t('Office hours of the day (compact)'),
       'field types' => array('office_hours'),
       'multiple values' => CONTENT_HANDLE_MODULE,
     ),
@@ -697,4 +706,17 @@ function office_hours_preprocess_office_hours_formatter_default(&$vars) {
   return $vars;
 }
 
+/**
+ * Preprocess hook for default field formatter.
+ */
+function office_hours_preprocess_office_hours_formatter_daily(&$vars) {
+  // This is ridiculously long, but it seems to be the best way to
+  // get the day name for the currently selected Drupal timezone,
+  // without the localisation.
+  $vars['day_name'] = strtolower(format_date($_SERVER['REQUEST_TIME'], 'custom', 'D', NULL, 'en'));
+
+  $field_name = $vars['element']['#field_name'] . '_processed';
+  $formatted_field = $vars['element']['#node']->$field_name;
+  $vars['day'] = $formatted_field['week'][$vars['day_name']];
+}
 
