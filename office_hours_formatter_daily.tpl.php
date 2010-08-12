@@ -6,8 +6,15 @@
  * Formatter for outputting office hours for a single day.
  */
 
-foreach ($day as $hours):
-  if (!empty($hours)):
+// For closed days, we have an empty array if closed labels are enabled.
+if (empty($day)):?>
+
+<span class="hours closed"><?php print t('closed'); ?></span>
+
+<?php else:
+// Otherwise, print each set of hours.
+  foreach ($day as $hours):
+    if (!empty($hours)):
 ?>
 
 <span class="hours">
@@ -16,13 +23,8 @@ foreach ($day as $hours):
 </span>
 
 <?php
-  else: 
-?>
-
-<span class="hours closed"><?php print t('closed'); ?></span>';
-
-<?php
-  endif;
-endforeach;
+    endif;
+  endforeach;
+endif;
 ?>
 
