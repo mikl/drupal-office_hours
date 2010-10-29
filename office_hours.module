@@ -257,7 +257,7 @@ function office_hours_views_api() {
  *    ISO-8601 identifier for the week (ie. 2009W23).
  */
 function office_hours_page_get_week($nids, $field_name, $year = NULL, $week = NULL) {
-  drupal_json(office_hours_bulk_load($nids, $field_name, $year, $week));
+  drupal_json(office_hours_bulk_load($nids, $field_name, $year, $week, TRUE));
 }
 
 /**
@@ -272,7 +272,7 @@ function office_hours_page_get_week($nids, $field_name, $year = NULL, $week = NU
  * @return array
  *    Office hours data, keyed by node id.
  */
-function office_hours_bulk_load($nids, $field_name, $year = NULL, $week = NULL) {
+function office_hours_bulk_load($nids, $field_name, $year = NULL, $week = NULL, $render = FALSE) {
   $data = array();
 
   $nid_array = array_filter(explode(',', $nids), 'is_numeric');
@@ -306,19 +306,34 @@ function office_hours_bulk_load($nids, $field_name, $year = NULL, $week = NULL) 
 
     // If available, serve cached data.
     if ($cache = cache_get($cache_key) && $cache->expire > $_SERVER['REQUEST_TIME']) {
-      return $cache->data;
+      $data = $cache->data;
+      $expiry = $cache->expire;
+    }
+    else {
+      $field = content_fields($field_name);
+      $items = office_hours_load_data($nid_array, $field);
+
+      foreach ($nid_array as $nid) {
+        // Correctly format week spec for our helper functions.
+        $week_spec = sprintf('%04uW%02u', $data['year'], $data['week']);
+        $data['data'][$nid] = office_hours_process_data($field, $items[$nid], $week_spec);
+      }
+
+      // Cache expires next quarter hour.
+      $minutes = ceil((date('i') + 1) / 15) * 15;
+
+      if ($minutes == 60) {
+        $expiry = strtotime(date('Y-m-d\T') . (date('H') + 1)  . ':00');
+      }
+      else {
+        $expiry = strtotime(date('Y-m-d\TH') . ':' . $minutes);
+      }
+
+      cache_set($cache_key, $data, 'cache', $expiry);
     }
 
-    $field = content_fields($field_name);
-    $items = office_hours_load_data($nid_array, $field);
-
-    foreach ($nid_array as $nid) {
-      // Correctly format week spec for our helper functions.
-      $week_spec = sprintf('%04uW%02u', $data['year'], $data['week']);
-      $data['data'][$nid] = office_hours_process_data($field, $items[$nid], $week_spec);
-
-      // Only render HTML for a single node.
-      if (count($nid_array) == 1) {
+    if ($render and !isset($data['html'][key($data['html'])])) {
+      foreach ($nid_array as $nid) {
         // Create mock node and element for rendering our field.
         $node = new stdClass;
         $node->nid = $nid;
@@ -330,19 +345,9 @@ function office_hours_bulk_load($nids, $field_name, $year = NULL, $week = NULL) 
 
         $data['html'][$nid] = theme('office_hours_formatter_default', $element);
       }
+      // Resave the cache with the rendered elements.
+      cache_set($cache_key, $data, 'cache', $expiry);
     }
-
-    // Cache expires next quarter hour.
-    $minutes = ceil((date('i') + 1) / 15) * 15;
-
-    if ($minutes == 60) {
-      $expiry = strtotime(date('Y-m-d\T') . (date('H') + 1)  . ':00');
-    }
-    else {
-      $expiry = strtotime(date('Y-m-d\TH') . ':' . $minutes);
-    }
-
-    cache_set($cache_key, $data, 'cache', $expiry);
   }
   return $data;
 }
