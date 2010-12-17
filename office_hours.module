@@ -290,7 +290,9 @@ function office_hours_bulk_load($nids, $field_name, $year = NULL, $week = NULL, 
   if ($week < 1) {
     $week = format_date($_SERVER['REQUEST_TIME'], 'custom', 'W');
   }
-  elseif ($week > 53) {
+  # Check if we're going from last week of year to next year
+  # We dont always have 53 weeks, so check for last wee no in selected year 
+  elseif ($week > date('W', mktime(0,0,0,12,31, $year))) {
     $week = 1;
     $year++;
   }
@@ -478,7 +480,8 @@ function office_hours_sanitise_week_input($input) {
   $input = str_replace(' ', '', $input);
 
   if (preg_match('/(\d{4})W?(\d{2})/', $input, $matches)) {
-    if ($matches[1] > 2000 && $matches[2] < 54) {
+    # Check for week number, we dont always have 53 weeks per year
+    if ($matches[1] > 2000 && $matches[2] < ( 1+date('W', mktime(0,0,0,12,31, $year)) )) {
       return sprintf('%04uW%02u', intval($matches[1]), intval($matches[2]));
     }
   }

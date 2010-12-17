@@ -64,8 +64,13 @@ Drupal.officeHours.sanitiseTimeInput = function (elem) {
 Drupal.officeHours.sanitiseWeekInput = function (elem) {
   var $this = $(elem);
   var newVal = '';
-
   var match = $this.val().match(Drupal.officeHours.yearWeekMatcher);
+
+  // Find max week no of year
+  var weekObj = new Date(match[1], 11, 31);
+  var weekno = weekObj.getWeek();
+  var maxWeek = weekno+1;
+
   if (match) {
     newVal += parseInt(match[1]);
     newVal += 'W';
@@ -74,7 +79,8 @@ Drupal.officeHours.sanitiseWeekInput = function (elem) {
     if (match[2] < 10) {
       newVal += '0' + parseInt(match[2]);
     }
-    else if (match[2] < 54) {
+    // We dont always have 53 weeks per year
+    else if (match[2] < maxWeek) {
       newVal += match[2];
     }
     else {
@@ -84,7 +90,8 @@ Drupal.officeHours.sanitiseWeekInput = function (elem) {
   else {
     // If we couldn't match a full value, try finding a week number.
     var match = $this.val().match(Drupal.officeHours.twoDigitMatcher);
-    if (match && match[1] < 54) {
+    // We dont always have 53 weeks per year
+    if (match && match[1] < maxWeek) {
       var year = new Date().getFullYear();
       newVal += year + 'W' + match[1];
     }
