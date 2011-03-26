@@ -1,8 +1,6 @@
 <?php
-// $Id: office_hours.module,v 1.1.2.1.2.4 2009-04-04 10:42:48 ozeuss Exp $
-
 /**
- * @file office_hours.module
+ * @file
  * Creates a field and widget for inserting working or office hours per day
  */
 
