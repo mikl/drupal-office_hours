@@ -255,7 +255,10 @@ function office_hours_views_api() {
  *    ISO-8601 identifier for the week (ie. 2009W23).
  */
 function office_hours_page_get_week($nids, $field_name, $year = NULL, $week = NULL) {
-  drupal_json(office_hours_bulk_load($nids, $field_name, $year, $week, TRUE));
+  // We are returning JavaScript, so tell the browser.
+  drupal_set_header('Content-Type', 'application/json');
+
+  echo drupal_to_js(office_hours_bulk_load($nids, $field_name, $year, $week, TRUE));
 }
 
 /**
