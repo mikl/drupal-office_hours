@@ -54,6 +54,15 @@ function office_hours_content_is_empty($item, $field) {
     return TRUE;
   }
 
+  switch ($item['scope']) {
+  case 'week':
+    return empty($item['week_start']);
+    break;
+  case 'week_range':
+    return empty($item['week_start']) || empty($item['week_start']);
+    break;
+  }
+
   // Check if one of the days have a open hour.
   foreach (_office_hours_day_names() as $name) {
     if (!empty($item[$name . '_open'])) {
@@ -292,7 +301,7 @@ function office_hours_bulk_load($nids, $field_name, $year = NULL, $week = NULL, 
     $week = format_date($_SERVER['REQUEST_TIME'], 'custom', 'W');
   }
   # Check if we're going from last week of year to next year
-  # We dont always have 53 weeks, so check for last wee no in selected year 
+  # We dont always have 53 weeks, so check for last wee no in selected year
   elseif ($week > date('W', mktime(0,0,0,12,31, $year))) {
     $week = 1;
     $year++;
