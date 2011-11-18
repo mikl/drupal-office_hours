@@ -1,5 +1,3 @@
-// $Id$
-
 /**
  * @file
  * Main JavaScript library for our office hours JavaScript.
