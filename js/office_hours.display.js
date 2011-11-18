@@ -46,31 +46,32 @@ Date.prototype.getWeek = function() {
  * Calls Drupal's JSON callback to get the new data.
  */
 Drupal.officeHours.changeWeek = function (nid, direction) {
-  var conf, week, weekObj, weekno;
+  var conf, week, weekObj, weekNumber;
   conf = Drupal.settings.officeHours['node' + nid];
   
   // Find amount of weeks in selected year, because there is not always 53 weeks in a year
   weekObj = new Date(conf.year, 11, 31); // 31.12.this.year
-  weekno = (weekObj.getWeek()-1);
+  weekNumber = (weekObj.getWeek() - 1);
 
   // If we're going to previous week, and we're stepping between years, be sure to set week and year correct
   if (direction === 'prev') {
     week = parseInt(conf.week, 10) - 1;
     if (week < 1) {
-      week = weekno;
+      week = weekNumber;
       conf.year = conf.year - 1;
     }
   }
   else {
     // If we're going to next week, and shifting to new year, be sure to set week no and year correct
-    if (conf.week >= weekno) {
+    if (conf.week >= weekNumber) {
       week = 1;
-      conf.year = conf.year+1;
+      conf.year = conf.year + 1;
     }
     else {
       week = parseInt(conf.week, 10) + 1;
     }
   }
+
   $.getJSON(conf.callback + '/' + nid + '/' + conf.field_name + '/' + conf.year + '/' + week, {}, function (data, textStatus) {
     conf.week = parseInt(data.week, 10);
     conf.year = parseInt(data.year, 10);

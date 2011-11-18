@@ -68,8 +68,8 @@ Drupal.officeHours.sanitiseWeekInput = function (elem) {
       match = $this.val().match(Drupal.officeHours.yearWeekMatcher),
       // Find max week no of year
       weekObj = new Date(match[1], 11, 31),
-      weekno = weekObj.getWeek(),
-      maxWeek = weekno + 1,
+      weekNumber = weekObj.getWeek(),
+      maxWeek = weekNumber + 1,
       year;
 
   if (match) {
