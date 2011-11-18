@@ -1,8 +1,6 @@
 <?php
-//$Id$
-
 /**
- * @file office_hours.theme.inc
+ * @file
  * Office hours theming functions.
  */
 
@@ -10,9 +8,9 @@
  * Theme function for the office hours week form element.
  */
 function theme_office_hours_week($element) {
-  drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.js');
-  drupal_add_js(drupal_get_path('module', 'office_hours') . '/office_hours.form.js');
-  drupal_add_css(drupal_get_path('module', 'office_hours') . '/office_hours.form.css');
+  drupal_add_js(drupal_get_path('module', 'office_hours') . '/js/office_hours.js');
+  drupal_add_js(drupal_get_path('module', 'office_hours') . '/js/office_hours.form.js');
+  drupal_add_css(drupal_get_path('module', 'office_hours') . '/css/office_hours.form.css');
   $header = array(t('Day'), t('Opening time'), t('Closing time'));
   $rows = array();
 
