@@ -36,8 +36,8 @@ Drupal.behaviors.officeHours = function () {
  * Helper function to get week no from a date object
  */
 Date.prototype.getWeek = function() {
-  var onejan = new Date(this.getFullYear(),0,1);
-  return Math.ceil((((this - onejan) / 86400000) + onejan.getDay()+1)/7);
+  var onejan = new Date(this.getFullYear(), 0, 1);
+  return Math.ceil((((this - onejan) / 86400000) + onejan.getDay() + 1) / 7);
 };
 
 /**
@@ -46,29 +46,32 @@ Date.prototype.getWeek = function() {
  * Calls Drupal's JSON callback to get the new data.
  */
 Drupal.officeHours.changeWeek = function (nid, direction) {
-  var conf, week, weekObj, weekNumber;
+  var conf, week, lastDayOfYear, weekCount;
   conf = Drupal.settings.officeHours['node' + nid];
-  
+
   // Find amount of weeks in selected year, because there is not always 53 weeks in a year
-  weekObj = new Date(conf.year, 11, 31); // 31.12.this.year
-  weekNumber = (weekObj.getWeek() - 1);
+  lastDayOfYear = new Date(conf.year, 11, 31); // 31.12.this.year
+  weekCount = (lastDayOfYear.getWeek() - 1);
 
   // If we're going to previous week, and we're stepping between years, be sure to set week and year correct
   if (direction === 'prev') {
     week = parseInt(conf.week, 10) - 1;
+
+    // If week number is less than one, switch to the last week of the
+    // previous year.
     if (week < 1) {
-      week = weekNumber;
+      week = weekCount;
       conf.year = conf.year - 1;
     }
   }
   else {
-    // If we're going to next week, and shifting to new year, be sure to set week no and year correct
-    if (conf.week >= weekNumber) {
+    week = parseInt(conf.week, 10) + 1;
+
+    // If the week number exceeds the total number of weeks for a year,
+    // switch to the first week of the next year.
+    if (week > weekCount) {
       week = 1;
       conf.year = conf.year + 1;
-    }
-    else {
-      week = parseInt(conf.week, 10) + 1;
     }
   }
 
