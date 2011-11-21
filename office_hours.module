@@ -293,16 +293,19 @@ function office_hours_bulk_load($nids, $field_name, $year = NULL, $week = NULL, 
   $year = preg_replace('/[^\d]/', '', $year);
   $week = preg_replace('/[^\d]/', '', $week);
 
+  // If the date is outside a reasonable range, assume the current year.
   if ($year < 2000 || $year > 3000) {
-    $year = format_date($_SERVER['REQUEST_TIME'], 'custom', 'Y');
+    $year = (integer) format_date($_SERVER['REQUEST_TIME'], 'custom', 'Y');
   }
 
+  // If week is less than one, switch to the last week of the previous year.
   if ($week < 1) {
-    $week = format_date($_SERVER['REQUEST_TIME'], 'custom', 'W');
+    $year--;
+    $week = office_hours_week_count_for_year($year);
   }
   # Check if we're going from last week of year to next year
   # We dont always have 53 weeks, so check for last wee no in selected year
-  elseif ($week > date('W', mktime(0,0,0,12,31, $year))) {
+  elseif ($week > office_hours_week_count_for_year($year)) {
     $week = 1;
     $year++;
   }
@@ -689,6 +692,26 @@ function _office_hours_week_from_iso($spec=NULL) {
     $spec = date('Y\WW');
   }
   return explode('W', $spec);
+}
+
+/**
+ * Get the number of weeks in a year.
+ *
+ * @param integer $year
+ *   Year to get count for.
+ * @return integer
+ *   Number of weeks in the given year.
+ */
+function office_hours_week_count_for_year($year) {
+  $week_count = (integer) date('W', mktime(0, 0, 0, 12, 31, $year));
+
+  // In some cases, the last day of the year is actually in week one of
+  // the following year. In this case, the week count is 52.
+  if ($week_count === 1) {
+    $week_count = 52;
+  }
+
+  return $week_count;
 }
 
 /**
