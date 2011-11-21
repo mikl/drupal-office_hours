@@ -1,24 +1,25 @@
-// $Id$
-
 /**
  * @file
  * Drupal behavior for the office hours editing form.
  */
 
+(function ($) {
+"use strict";
+
 /**
  * Callback to sanitise a text input field for time values.
  */
 Drupal.officeHours.sanitiseTimeInput = function (elem) {
-  var $this = $(elem);
-  var newVal = '';
+  var $this = $(elem),
+      newVal = '',
+      // Try matching for full time.
+      match = $this.val().match(Drupal.officeHours.timeMatcher);
 
-  // Try matching for full time.
-  var match = $this.val().match(Drupal.officeHours.timeMatcher);
   if (match) {
     // match[1] is hours, match[2] is minutes.
     // Prefix zero to single-digit hours.
     if (match[1] < 10) {
-      newVal += '0' + parseInt(match[1]);
+      newVal += '0' + parseInt(match[1], 10);
     }
     else if (match[1] < 24) {
       newVal += match[1];
@@ -37,11 +38,11 @@ Drupal.officeHours.sanitiseTimeInput = function (elem) {
   }
   else {
     // Try matching just an hours value.
-    var match = $this.val().match(Drupal.officeHours.twoDigitMatcher);
+    match = $this.val().match(Drupal.officeHours.twoDigitMatcher);
     if (match) {
       // Prefix zero to single-digit hours.
       if (match[1] < 10) {
-        newVal += '0' + parseInt(match[1]);
+        newVal += '0' + parseInt(match[1], 10);
       }
       else if (match[1] < 24) {
         newVal += match[1];
@@ -62,22 +63,22 @@ Drupal.officeHours.sanitiseTimeInput = function (elem) {
  * Callback to sanitise a text input field for week values.
  */
 Drupal.officeHours.sanitiseWeekInput = function (elem) {
-  var $this = $(elem);
-  var newVal = '';
-  var match = $this.val().match(Drupal.officeHours.yearWeekMatcher);
-
-  // Find max week no of year
-  var weekObj = new Date(match[1], 11, 31);
-  var weekno = weekObj.getWeek();
-  var maxWeek = weekno+1;
+  var $this = $(elem),
+      newVal = '',
+      match = $this.val().match(Drupal.officeHours.yearWeekMatcher),
+      // Find max week no of year
+      weekObj = new Date(match[1], 11, 31),
+      weekNumber = weekObj.getWeek(),
+      maxWeek = weekNumber + 1,
+      year;
 
   if (match) {
-    newVal += parseInt(match[1]);
+    newVal += parseInt(match[1], 10);
     newVal += 'W';
 
     // Prefix zero to single-digit weeks.
     if (match[2] < 10) {
-      newVal += '0' + parseInt(match[2]);
+      newVal += '0' + parseInt(match[2], 10);
     }
     // We dont always have 53 weeks per year
     else if (match[2] < maxWeek) {
@@ -89,10 +90,10 @@ Drupal.officeHours.sanitiseWeekInput = function (elem) {
   }
   else {
     // If we couldn't match a full value, try finding a week number.
-    var match = $this.val().match(Drupal.officeHours.twoDigitMatcher);
+    match = $this.val().match(Drupal.officeHours.twoDigitMatcher);
     // We dont always have 53 weeks per year
     if (match && match[1] < maxWeek) {
-      var year = new Date().getFullYear();
+      year = new Date().getFullYear();
       newVal += year + 'W' + match[1];
     }
   }
@@ -110,15 +111,15 @@ Drupal.behaviors.officeHoursForm = function () {
   });
 
   $('.office-hour-rule-select select').change(function () {
-    var $this = $(this);
-    var $wrapper = $this.parents('.office-hour-rule-select');
+    var $this = $(this),
+        $wrapper = $this.parents('.office-hour-rule-select');
 
     // For the week range, show both text fields.
-    if ($this.val() == 'week_range') {
+    if ($this.val() === 'week_range') {
       $wrapper.find('input.form-text').parent().show('fast');
     }
     // For the week, show only the start field.
-    else if ($this.val() == 'week') {
+    else if ($this.val() === 'week') {
       $wrapper.find('input.week-start').parent().show('fast');
       $wrapper.find('input.week-end').parent().hide('fast');
     }
@@ -151,4 +152,6 @@ Drupal.behaviors.officeHoursForm = function () {
     return false;
   });
 };
+
+}(jQuery));
 
