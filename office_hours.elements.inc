@@ -50,6 +50,7 @@ function office_hours_week_process($element, $edit, $form_state, $form) {
       'week' => t('Specific week'),
       'week_range' => t('A range of weeks'),
     ),
+    '#attributes' => array('class' => 'scope'),
     '#default_value' => $values['scope'],
   );
 

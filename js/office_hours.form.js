@@ -140,7 +140,8 @@ Drupal.behaviors.officeHoursForm = function () {
     $(this).parents('tr.draggable').fadeOut('normal', function () {
       // Empty all the time inputs, since that will cause the field to
       // be considered empty by CCK, and be deleted.
-      $(this).find('input.time').val('');
+      $(this).find('.form-text').val('');
+      $(this).find('.scope').val('all');
     });
 
     // If not done already, mark the tableDrag as changed.
