@@ -288,6 +288,12 @@ function office_hours_bulk_load($nids, $field_name, $year = NULL, $week = NULL, 
   $nid_array = array_filter(explode(',', $nids), 'is_numeric');
   sort($nid_array, SORT_NUMERIC);
 
+  // Default to current year and week if not set.
+  if (is_null($year) || is_null($week)) {
+    $year = intval(date('Y'));
+    $week = intval(date('W'));
+  }
+
   // Sanitise our input.
   $field_name = preg_replace('/[^A-Za-z0-9_-]/', '', $field_name);
   $year = preg_replace('/[^\d]/', '', $year);
